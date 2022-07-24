@@ -1,0 +1,100 @@
+from ipaddress import IPv4Address
+
+import trio.testing
+
+from kilter.protocol import *
+from kilter.service import *
+
+from . import AsyncTestCase
+from .mock_editor import MockEditor
+
+LOCALHOST = IPv4Address("127.0.0.1")
+
+
+class HeaderAccessorTests(AsyncTestCase):
+	"""
+	Tests for the kilter.service.session.HeaderAccessor class
+	"""
+
+	async def test_iterate_body(self) -> None:
+		"""
+		Check that the body iterator works as expected
+		"""
+		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		result = b""
+
+		async def test_filter(session: Session) -> Accept:
+			nonlocal result
+			async with session.body as body:
+				async for chunk in body:
+					result += chunk
+			return Accept()
+
+		async with trio.open_nursery() as tg:
+			tg.start_soon(test_filter, session)
+			await trio.testing.wait_all_tasks_blocked()
+			await session.deliver(Body(b"Spam, "))
+			await session.deliver(Body(b"spam, "))
+			await session.deliver(EndOfMessage(b"and eggs"))
+
+		assert result == b"Spam, spam, and eggs"
+
+	async def test_break(self) -> None:
+		"""
+		Check that Body (and EOM) messages are skipped after breaking out of a loop
+		"""
+		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		result1 = b""
+		result2 = b""
+
+		async def test_filter(session: Session) -> Accept:
+			nonlocal result1
+			nonlocal result2
+
+			async with session.body as body:
+				async for chunk in body:
+					if chunk[:4] == b"spam":
+						break
+					result1 += chunk
+
+			async with session.body as body:
+				async for chunk in body:
+					result2 += chunk
+
+			return Accept()
+
+		async with trio.open_nursery() as tg:
+			tg.start_soon(test_filter, session)
+			await trio.testing.wait_all_tasks_blocked()
+			assert Continue == await session.deliver(Body(b"Spam, "))
+			assert Skip == await session.deliver(Body(b"spam, "))
+			assert Skip == await session.deliver(Body(b"spam, "))
+			assert Continue == await session.deliver(EndOfMessage(b"and eggs"))
+
+		assert result1 == b"Spam, "
+		assert result2 == b""
+
+	async def test_write(self) -> None:
+		"""
+		Check that `write()` works as expected
+		"""
+		sender = MockEditor()
+		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+
+		# Temporary hack for missing equality check in kilter.protocol
+		def _eq(s: ReplaceBody, o: object) -> bool:
+			if not isinstance(o, type(s)):
+				return NotImplemented
+			return s.content == o.content
+		ReplaceBody.__eq__ = _eq  # type: ignore
+
+		async def test_filter(session: Session) -> Accept:
+			await session.body.write(b"A new message")
+			return Accept()
+
+		async with trio.open_nursery() as tg:
+			tg.start_soon(test_filter, session)
+			await trio.testing.wait_all_tasks_blocked()
+			await session.deliver(EndOfMessage(b""))
+
+		sender._asend.assert_awaited_with(ReplaceBody(b"A new message"))

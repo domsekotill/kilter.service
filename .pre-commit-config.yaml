@@ -101,6 +101,6 @@ repos:
     args: [--follow-imports=silent]
     additional_dependencies:
     - anyio
-    - kilter.protocol
+    - kilter.protocol ~=0.1.3
     - sphinx
     - trio-typing

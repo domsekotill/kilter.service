@@ -75,9 +75,10 @@ async def reject_black_knight(session: Session) -> Reject|Accept:
 	if (await session.envelope_from()) == BLOCK:
 		return Reject()
 
-	async for header in session.headers:
-		if header.name == "From" and header.value == BLOCK:
-			return Reject()
+	async with session.headers as headers:
+		async for header in headers:
+			if header.name == "From" and header.value == BLOCK:
+				return Reject()
 
 	return Accept()
 ```
@@ -94,9 +95,10 @@ async def strip_x_headers(session: Session) -> Accept:
 	remove = []
 
 	# iterate over headers as they arrive and select ones for later removal
-	async for header in session.headers:
-		if header.name.startswith("X-"):
-			remove.append(header)
+	async with session.headers as headers:
+		async for header in headers:
+			if header.name.startswith("X-"):
+				remove.append(header)
 
 	# remove the selected headers during the post phase
 	for header in remove:
@@ -112,9 +114,10 @@ async def strip_x_headers(session: Session) -> Accept:
 	await session.headers.collect()
 
 	# iterate over collected headers during the post phase, removing the unwanted ones
-	async for header in session.headers:
-		if header.name.startswith("X-"):
-			await session.headers.remove(header)
+	async with session.headers as headers:
+		async for header in headers:
+			if header.name.startswith("X-"):
+				await session.headers.remove(header)
 ```
 
 
