@@ -217,7 +217,7 @@ class Session:
 			while self.phase <= Phase.MAIL:
 				message = await self._broadcast.receive()
 				if isinstance(message, EnvelopeFrom):
-					return message.sender.decode()
+					return bytes(message.sender).decode()
 		raise RuntimeError("MAIL event not received")
 
 	async def envelope_recipients(self) -> AsyncIterator[str]:
@@ -235,7 +235,7 @@ class Session:
 			while self.phase <= Phase.ENVELOPE:
 				message = await self._broadcast.receive()
 				if isinstance(message, EnvelopeRecipient):
-					yield message.recipient.decode()
+					yield bytes(message.recipient).decode()
 
 	async def extension(self, name: str) -> memoryview:
 		"""
