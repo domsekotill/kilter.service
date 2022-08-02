@@ -134,7 +134,11 @@ class Session:
 	The kernel of a filter, providing an API for filters to access messages from and MTA
 	"""
 
-	def __init__(self, connmsg: Connect, sender: AsyncGenerator[None, EditMessage|Skip]):
+	def __init__(
+		self,
+		connmsg: Connect,
+		sender: AsyncGenerator[None, EditMessage],
+	):
 		self.host = connmsg.hostname
 		self.address = connmsg.address
 		self.port = connmsg.port
@@ -429,7 +433,7 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 	entered.
 	"""
 
-	def __init__(self, session: Session, sender: AsyncGenerator[None, EditMessage|Skip]):
+	def __init__(self, session: Session, sender: AsyncGenerator[None, EditMessage]):
 		self.session = session
 		self._editor = sender
 
