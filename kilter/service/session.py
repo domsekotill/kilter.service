@@ -134,17 +134,21 @@ class Session:
 	The kernel of a filter, providing an API for filters to access messages from and MTA
 	"""
 
+	if TYPE_CHECKING:
+		Self = TypeVar("Self", bound="Session")
+
 	def __init__(
 		self,
 		connmsg: Connect,
 		sender: AsyncGenerator[None, EditMessage],
+		broadcast: util.Broadcast[EventMessage]|None = None,
 	):
 		self.host = connmsg.hostname
 		self.address = connmsg.address
 		self.port = connmsg.port
 
 		self._editor = sender
-		self._broadcast = util.Broadcast[EventMessage]()
+		self._broadcast = broadcast or util.Broadcast[EventMessage]()
 
 		self.headers = HeadersAccessor(self, sender)
 		self.body = BodyAccessor(self, sender)
@@ -154,6 +158,13 @@ class Session:
 		# Phase checking is a bit fuzzy as a filter may not request every message,
 		# so some phases will be skipped; checks should not try to exactly match a phase.
 		self.phase = Phase.CONNECT
+
+	async def __aenter__(self: Self) -> Self:
+		return self
+
+	async def __aexit__(self, *_: object) -> None:
+		# on session close, wake up any remaining deliver() awaitables
+		await self._broadcast.aclose()
 
 	async def deliver(self, message: EventMessage) -> type[Continue]|type[Skip]:
 		"""

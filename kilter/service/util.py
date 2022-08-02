@@ -33,6 +33,24 @@ class Broadcast(anyio.Condition, Generic[T]):
 		super().__init__()
 		self.obj: Optional[T] = None
 
+	async def pre_receive_hook(self) -> None:
+		"""
+		A hook for subclasses to inject synchronisation instructions before awaiting objects
+		"""  # noqa: D401
+
+	async def post_send_hook(self) -> None:
+		"""
+		A hook for subclasses to inject synchronisation instructions after sending objects
+		"""  # noqa: D401
+
+	async def aclose(self) -> None:
+		"""
+		A hook for subclasses to inject cleanup or synchronisation instructions on close
+
+		Users must ensure this method is called, especially if using a subclass which
+		implements it.
+		"""  # noqa: D401
+
 	async def send(self, obj: T) -> None:
 		"""
 		Send a message object and block until all listeners have received it
@@ -41,6 +59,9 @@ class Broadcast(anyio.Condition, Generic[T]):
 			self.obj = obj
 			self.notify_all()
 		await anyio.sleep(0.0)  # ensure listeners have opportunity to wait for locks
+		await self.post_send_hook()
+
+		# Ensure all listeners have had a chance to lock and process self.obj
 		while 1:
 			async with self:
 				if self.statistics().lock_statistics.tasks_waiting:
@@ -52,6 +73,7 @@ class Broadcast(anyio.Condition, Generic[T]):
 		"""
 		Listen for a single message and return it once it arrives
 		"""
+		await self.pre_receive_hook()
 		await self.wait()
 		assert self.obj is not None
 		return self.obj
