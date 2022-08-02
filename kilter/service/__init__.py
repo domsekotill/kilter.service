@@ -8,6 +8,7 @@ project).  The framework aims to provide Pythonic interfaces for implementing fi
 including leveraging coroutines instead of libmilter's callback-style interface.
 """
 
+from .runner import Runner
 from .session import END
 from .session import START
 from .session import After
@@ -22,6 +23,7 @@ __all__ = [
 	"Before",
 	"END",
 	"ResponseMessage",
+	"Runner",
 	"START",
 	"Session",
 ]
