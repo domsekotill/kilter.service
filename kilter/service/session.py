@@ -19,24 +19,36 @@ from typing import TYPE_CHECKING
 from typing import AsyncContextManager
 from typing import Literal
 from typing import Protocol
+from typing import TypeAlias
 from typing import TypeVar
 from typing import Union
 
 from ..protocol.messages import *
 from . import util
 
-EventMessage = Union[
+EventMessage: TypeAlias = Union[
 	Connect, Helo, EnvelopeFrom, EnvelopeRecipient, Data, Unknown,
 	Header, EndOfHeaders, Body, EndOfMessage,
 ]
-ResponseMessage = Union[
+"""
+Messages sent from an MTA to a filter
+"""
+
+ResponseMessage: TypeAlias = Union[
 	Continue, Reject, Discard, Accept, TemporaryFailure, Skip,
 	ReplyCode, Abort,
 ]
-EditMessage = Union[
+"""
+Messages send from a filter to an MTA in response to `EventMessages`
+"""
+
+EditMessage: TypeAlias = Union[
 	AddHeader, ChangeHeader, InsertHeader, ChangeSender, AddRecipient, AddRecipientPar,
 	RemoveRecipient, ReplaceBody,
 ]
+"""
+Messages send from a filter to an MTA after an `EndOfMessage` to modify a message
+"""
 
 
 class Filter(Protocol):
@@ -126,7 +138,14 @@ class After(Position):
 
 
 START = Position("start")
+"""
+Indicates the start of a header list, before the first (current) header
+"""
+
 END = Position("end")
+"""
+Indicates the end of a header list, after the last (current) header
+"""
 
 
 class Session:
@@ -136,6 +155,9 @@ class Session:
 
 	if TYPE_CHECKING:
 		Self = TypeVar("Self", bound="Session")
+
+	headers: HeadersAccessor
+	body: BodyAccessor
 
 	def __init__(
 		self,
@@ -207,7 +229,7 @@ class Session:
 		Wait for a MAIL command message and return the sender identity
 
 		Note that if extensions arguments are wanted, users should use `Session.extension()`
-		instead with a name of `MAIL`.
+		instead with a name of ``"MAIL"``.
 		"""
 		if self.phase > Phase.MAIL:
 			raise RuntimeError(
@@ -225,7 +247,7 @@ class Session:
 		Wait for RCPT command messages and iteratively yield the recipients' identities
 
 		Note that if extensions arguments are wanted, users should use `Session.extension()`
-		instead with a name of `RCPT`.
+		instead with a name of ``"RCPT"``.
 		"""
 		if self.phase > Phase.ENVELOPE:
 			raise RuntimeError(
@@ -371,7 +393,7 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 		Move onto the `Phase.POST` phase and instruct the MTA to insert a new header
 
 		The header is inserted at `START`, `END`, or a relative position with `Before` and
-		`After`; for example `Before(Header("To", "test@example.com"))`.
+		`After`; for example ``Before(Header("To", "test@example.com"))``.
 		"""
 		await self.collect()
 		await _until_editable(self.session)
@@ -394,7 +416,7 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 
 class HeaderIterator(AsyncGenerator[Header, None]):
 	"""
-	Iterator for headers obtained by using a `HeaderAccessor` as a context manager
+	Iterator for headers obtained by using a `HeadersAccessor` as a context manager
 	"""
 
 	if TYPE_CHECKING:
@@ -440,7 +462,7 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 	A class that allows access and modification of the message body sent from an MTA
 
 	To access chunks of abody (which are only available iteratively), use an instance as an
-	asynchronous context manager; a `BodyIterator` is returned when the context is
+	asynchronous context manager; an asynchronous iterator is returned when the context is
 	entered.
 	"""
 
