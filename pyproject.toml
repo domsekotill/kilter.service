@@ -31,6 +31,11 @@ tests = [
 	"kodo.plugins.cover_test_context @ https://code.kodo.org.uk/dom/cover-plugin-test-context/-/archive/main/cover-plugin-test-context-main.zip",
 	"trio",
 ]
+docs = [
+	"sphinx ~=5.0",
+	"myst-parser",
+	"sphinx-rtd-theme",
+]
 
 [project.urls]
 Repository = "https://code.kodo.org.uk/dom/kilter.service"
@@ -57,6 +62,9 @@ pycodestyle = ["-E701", "-E226"]
 flake8-docstrings = ["-D100"]
 
 [tool.flakeheaven.exceptions."README.md"]
+flake8-docstrings = ["-*"]
+
+[tool.flakeheaven.exceptions."doc/*"]
 flake8-docstrings = ["-*"]
 
 
