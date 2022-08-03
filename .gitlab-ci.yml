@@ -1,0 +1,175 @@
+# Optional project CI variables to set:
+#
+# SAFETY_API_KEY:
+#   Set to your API key for accessing up-to-date package security information
+
+
+workflow:
+  rules:
+  - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$$/
+  - if: $CI_COMMIT_BRANCH
+
+
+.python:
+  image: python:3.10
+  variables:
+    PIP_CACHE_DIR: $CI_PROJECT_DIR/cache/pkg
+    PIP_NO_COMPILE: "true"
+    PIP_NO_CLEAN: "true"
+  cache:
+    key: $CI_JOB_IMAGE
+    paths: [cache]
+
+
+Quality Gate:
+  stage: .pre
+  image: docker.kodo.org.uk/ci-images/pre-commit:latest
+  variables:
+    PRE_COMMIT_HOME: $CI_PROJECT_DIR/cache/pre-commit
+  cache:
+    key: $CI_JOB_IMAGE
+    paths: [cache]
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "push"
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+  - source .gitlab-ci.pre-commit-run.bash
+  - pre_commit_run --hook-stage=commit
+  - pre_commit_run --hook-stage=push
+
+
+Build Package:
+  stage: build
+  extends: [.python]
+  script:
+  - pip install build
+  - python -m build
+  - (set dist/kilter_protocol-*.whl; mv "$1" "${1/kilter_protocol/kilter.protocol}")
+  artifacts:
+    paths: [dist]
+
+
+Pin:
+  # Pin dependencies in requirements.txt for reproducing pipeline results
+  stage: build
+  extends: [.python]
+  script:
+  - pip install --prefer-binary -e .
+  - pip freeze --exclude-editable | tee requirements.txt
+  artifacts:
+    paths: [requirements.txt]
+
+
+Dependency Check:
+  stage: test
+  image: pyupio/safety:latest
+  needs: [Pin]
+  allow_failure: true
+  script:
+  - safety check -r requirements.txt
+
+
+Unit Tests:
+  stage: test
+  extends: [.python]
+  needs: [Pin]
+  script:
+  - pip install -r requirements.txt -e .
+    coverage[toml]
+    pytest
+    "kodo.plugins.cover_test_context @ https://code.kodo.org.uk/dom/cover-plugin-test-context/-/archive/main/cover-plugin-test-context-main.zip"
+  - coverage run -m pytest tests
+    --verbose
+    --junit-xml=results/xunit.xml
+  after_script:
+  - coverage report
+  - coverage json
+  - coverage xml
+  - coverage html
+  coverage: '/^TOTAL .* (\d{1,3}\.\d{2})%$/'
+  artifacts:
+    paths: [results]
+    reports:
+      junit: results/xunit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: results/coverage.xml
+
+
+Check Tag:
+  stage: test
+  extends: [.python]
+  needs: ["Build Package"]
+  rules:
+  - if: $CI_COMMIT_TAG
+  script:
+  - pip install packaging pkginfo
+  - |
+    python <<-END
+    from glob import glob
+    from packaging.version import Version
+    from pkginfo import Wheel
+
+    wheel_path = glob("dist/*.whl")[0]
+    wheel = Wheel(wheel_path)
+    assert Version("$CI_COMMIT_TAG") == Version(wheel.version)
+    END
+
+
+Upload Package (Test):
+  stage: deploy
+  extends: [.python]
+  dependencies: ["Build Package"]
+  rules:
+  - if: $CI_COMMIT_TAG
+  script:
+  - pip install twine
+  - TWINE_USERNAME=gitlab-ci-token
+    TWINE_PASSWORD=$CI_JOB_TOKEN
+    twine upload
+    --verbose
+    --non-interactive
+    --repository-url $CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/pypi
+    dist/*
+
+
+Upload Package (PyPI):
+  stage: deploy
+  extends: [.python]
+  dependencies: ["Build Package"]
+  rules:
+  - if: $PYPI_TOKEN && $CI_COMMIT_TAG
+    when: manual
+  script:
+  - pip install twine
+  - TWINE_USERNAME=__token__
+    TWINE_PASSWORD=$PYPI_TOKEN
+    twine upload
+    --verbose
+    --non-interactive
+    dist/*
+
+
+Documentation:
+  stage: build
+  extends: [.python]
+  script:
+  - pip install .[docs]
+  - make -C doc html HTML_BUILDER=dirhtml BUILDDIR=../build
+  artifacts:
+    paths: [build]
+
+
+pages:
+  stage: deploy
+  image: alpine
+  dependencies: [Documentation]
+  rules:
+  - if: $CI_COMMIT_TAG
+  script:
+  - mv build/html public
+  artifacts:
+    paths: [public]
