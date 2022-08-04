@@ -34,6 +34,10 @@ Sender = AsyncGenerator[None, Message]
 kiB = 2**10
 MiB = 2**20
 
+_VALID_FINAL_RESPONSES = Reject, Discard, Accept, TemporaryFailure, ReplyCode
+_VALID_EVENT_MESSAGE = Helo, EnvelopeFrom, EnvelopeRecipient, Data, Unknown, \
+	Header, EndOfHeaders, Body, EndOfMessage
+
 
 class NegotiationError(Exception):
 	"""
@@ -111,13 +115,7 @@ class Runner:
 						case Close():
 							return
 						case _:
-							assert isinstance(
-								message,
-								(
-									Helo, EnvelopeFrom, EnvelopeRecipient, Data, Unknown,
-									Header, EndOfHeaders, Body, EndOfMessage,
-								),
-							)
+							assert isinstance(message, _VALID_EVENT_MESSAGE)
 							skip = isinstance(message, Body)
 							for channel in channels:
 								await channel.send(message)
@@ -195,8 +193,6 @@ async def _sender(client: anyio.abc.ByteSendStream, proto: FilterProtocol) -> Se
 		del buff[:]
 
 
-_VALID_FINAL_RESPONSES = Reject, Discard, Accept, TemporaryFailure, ReplyCode
-
 async def _runner(
 	fltr: Filter,
 	session: Session,
@@ -226,13 +222,7 @@ async def _runner(
 			except (anyio.EndOfStream, anyio.ClosedResourceError):
 				tasks.cancel_scope.cancel()
 				return
-			assert isinstance(
-				message,
-				(
-					Helo, EnvelopeFrom, EnvelopeRecipient, Data, Unknown, Header,
-					EndOfHeaders, Body, EndOfMessage,
-				),
-			)
+			assert isinstance(message, _VALID_EVENT_MESSAGE)
 			resp = await session.deliver(message)
 			if final_resp is not None:
 				await channel.send(final_resp)  # type: ignore
