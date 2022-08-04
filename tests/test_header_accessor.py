@@ -1,11 +1,11 @@
 from ipaddress import IPv4Address
-from collections.abc import AsyncGenerator
 from unittest.mock import call
 
 import trio.testing
-from kilter.service.session import Phase
-from kilter.service import *
+
 from kilter.protocol import *
+from kilter.service import *
+from kilter.service.session import Phase
 
 from . import AsyncTestCase
 from .mock_editor import MockEditor
@@ -76,7 +76,7 @@ class HeaderAccessorTests(AsyncTestCase):
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(EndOfHeaders())
 
-			# Try and throw the iterator off!  The filter should not await any further 
+			# Try and throw the iterator off!  The filter should not await any further
 			# messages after the EndOfHeaders one.
 			await session.deliver(Header("Dead-Parrot", b"and spam"))
 

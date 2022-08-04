@@ -2,8 +2,10 @@ from ipaddress import IPv4Address
 from unittest.mock import call
 
 import trio.testing
-from kilter.service.session import Session, Phase
+
 from kilter.protocol import *
+from kilter.service.session import Phase
+from kilter.service.session import Session
 
 from . import AsyncTestCase
 from .mock_editor import MockEditor
