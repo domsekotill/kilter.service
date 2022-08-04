@@ -365,3 +365,27 @@ class SessionTests(AsyncTestCase):
 		sender._asend.assert_has_awaits([
 			call(RemoveRecipient("test@example.com")),
 		])
+
+	async def test_load_macros(self) -> None:
+		"""
+		Check that `deliver(Macro())` updates the macros dict
+		"""
+		sender = MockEditor()
+		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+
+		async def test_filter(session: Session) -> Accept:
+			self.assertDictEqual(session.macros, {})
+			await session.helo()
+			self.assertDictEqual(session.macros, {"{spam}": "yes", "{eggs}": "yes"})
+			await session.envelope_from()
+			self.assertDictEqual(session.macros, {"{spam}": "no", "{ham}": "maybe", "{eggs}": "yes"})
+			return Accept()
+
+		async with trio.open_nursery() as tg:
+			tg.start_soon(test_filter, session)
+			await trio.testing.wait_all_tasks_blocked()
+
+			await session.deliver(Macro(Helo.ident, {"{spam}": "yes", "{eggs}": "yes"}))
+			await session.deliver(Helo("test.example.com"))
+			await session.deliver(Macro(Helo.ident, {"{spam}": "no", "{ham}": "maybe"}))
+			await session.deliver(EnvelopeFrom(b"test@example.com"))

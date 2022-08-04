@@ -117,7 +117,7 @@ class MockMessageStream:
 		msg.pack(buff)
 		await self._stream.send(buff[:].tobytes())
 		del buff[:]
-		if isinstance(msg, (Abort, Close)):
+		if isinstance(msg, (Macro, Abort, Close)):
 			return
 		while 1:
 			try:

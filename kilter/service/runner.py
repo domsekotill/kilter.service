@@ -89,6 +89,7 @@ class Runner:
 		proto = FilterProtocol()
 		sender = _sender(client, proto)
 		channels = list[MessageChannel]()
+		macro: Macro|None = None
 
 		await sender.asend(None)  # type: ignore # initialise
 
@@ -104,11 +105,13 @@ class Runner:
 					match message:
 						case Negotiate():
 							await self._negotiate(message, sender)
-						case Macro():
-							# TODO: implement macro support
-							...
+						case Macro() as macro:
+							# Note that this Macro will hang around as "macro"; this is for
+							# Connect messages.
+							for channel in channels:
+								await channel.send(macro)
 						case Connect():
-							channels[:] = await self._connect(message, sender, tasks)
+							channels[:] = await self._connect(message, sender, tasks, macro)
 						case Abort():
 							for channel in channels:
 								await channel.aclose()
@@ -156,12 +159,15 @@ class Runner:
 		message: Connect,
 		sender: Sender,
 		tasks: anyio.abc.TaskGroup,
+		macro: Macro|None,
 	) -> list[MessageChannel]:
 		channels = list[MessageChannel]()
 		for fltr in self.filters:
 			lchannel, rchannel = _make_message_channel()
 			channels.append(lchannel)
 			session = Session(message, sender, _Broadcast())
+			if macro:
+				await session.deliver(macro)
 			match await tasks.start(
 				_runner, fltr, session, rchannel, self.use_skip,
 			):
@@ -222,6 +228,9 @@ async def _runner(
 			except (anyio.EndOfStream, anyio.ClosedResourceError):
 				tasks.cancel_scope.cancel()
 				return
+			if isinstance(message, Macro):
+				await session.deliver(message)
+				continue
 			assert isinstance(message, _VALID_EVENT_MESSAGE)
 			resp = await session.deliver(message)
 			if final_resp is not None:

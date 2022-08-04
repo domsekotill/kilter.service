@@ -29,6 +29,7 @@ from . import util
 EventMessage: TypeAlias = Union[
 	Connect, Helo, EnvelopeFrom, EnvelopeRecipient, Data, Unknown,
 	Header, EndOfHeaders, Body, EndOfMessage,
+	Macro,
 ]
 """
 Messages sent from an MTA to a filter
@@ -172,6 +173,7 @@ class Session:
 		self._editor = sender
 		self._broadcast = broadcast or util.Broadcast[EventMessage]()
 
+		self.macros = dict[str, str]()
 		self.headers = HeadersAccessor(self, sender)
 		self.body = BodyAccessor(self, sender)
 
@@ -195,6 +197,9 @@ class Session:
 		match message:
 			case Body() if self.skip:
 				return Skip
+			case Macro():
+				self.macros.update(message.macros)
+				return Continue  # not strictly necessary, but type checker needs something
 			case Helo():
 				self.phase = Phase.MAIL
 			case EnvelopeFrom() | EnvelopeRecipient() | Unknown():

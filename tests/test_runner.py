@@ -304,3 +304,32 @@ class RunnerTests(AsyncTestCase):
 				await stream_mock.send_and_expect(Helo("test.example.com"), TemporaryFailure)
 
 			assert "expected a final response" in str(wcm.warning)
+
+	async def test_macros(self) -> None:
+		"""
+		Check that delivered macros are available
+		"""
+		@Runner
+		async def test_filter(session: Session) -> Accept:
+			self.assertDictEqual(session.macros, {"{spam}": "yes", "{eggs}": "yes"})
+			await session.helo()
+			self.assertDictEqual(session.macros, {"{spam}": "no", "{ham}": "maybe", "{eggs}": "yes"})
+			return Accept()
+
+		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
+			tg.start_soon(test_filter, stream_mock.peer_stream)
+			await trio.testing.wait_all_tasks_blocked()
+
+			await stream_mock.send_and_expect(
+				Negotiate(6, 0x1ff, 0),
+				Negotiate(6, 0x1ff, 0),
+			)
+			await stream_mock.send_and_expect(
+				Macro(Connect.ident, {"{spam}": "yes", "{eggs}": "yes"}),
+			)
+			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
+			await stream_mock.send_and_expect(
+				Macro(Connect.ident, {"{spam}": "no", "{ham}": "maybe"}),
+			)
+			await stream_mock.send_and_expect(Helo("test.example.com"), Accept)
+			await stream_mock.close()
