@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import builtins
 import re
+import sys
 from collections.abc import Callable
 from importlib import import_module
 from inspect import get_annotations
@@ -58,7 +59,7 @@ def get_replacer(
 	what: ObjType, doc_obj: object, doc_obj_name: str,
 ) -> Callable[[re.Match[str]], str]:
 	try:
-		module, cls = get_context(what, doc_obj)
+		module, cls = get_context(what, doc_obj, doc_obj_name)
 	except UnknownObject:
 		return lambda m: m.group(0)
 
@@ -104,7 +105,7 @@ def get_replacer(
 	return get_type
 
 
-def get_context(what: ObjType, obj: object) -> tuple[ModuleType, type|None]:
+def get_context(what: ObjType, obj: object, name: str) -> tuple[ModuleType, type|None]:
 	"""
 	Given an object and its type, return the module it's in and a class if appropriate
 
@@ -134,6 +135,13 @@ def get_context(what: ObjType, obj: object) -> tuple[ModuleType, type|None]:
 		case "function":
 			assert hasattr(obj, "__module__"), f"{what} {obj!r} has no attribute '__module__'"
 			return import_module(obj.__module__), None
+		case "attribute":
+			# Only thing to go on is the name, which *should* be fully qualified
+			_, parent, _ = dot_import(sys.modules["builtins"], None, name)
+			if isinstance(parent, type):
+				return sys.modules[parent.__module__], parent
+			if isinstance(parent, ModuleType):
+				return parent, None
 	raise UnknownObject(f"unknown value for 'what': {what}")
 
 
