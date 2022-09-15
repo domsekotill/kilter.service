@@ -33,8 +33,11 @@ class UnknownObject(ValueError):
 	"""
 
 
-def setup(app: Sphinx) -> None:
+def setup(app: Sphinx) -> dict[str, object]:
 	app.connect("autodoc-process-docstring", add_roles)
+	return dict(
+		parallel_read_safe=True,
+	)
 
 
 def add_roles(
