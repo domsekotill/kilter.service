@@ -50,7 +50,7 @@ def add_roles(
 	python objects in backticks for cross linking.
 	"""
 	replacer = get_replacer(what, obj, name)
-	regex = re.compile(r"(?<![:])`(?P<name>[a-z0-9_.]+)(\(\))?`", re.I)
+	regex = re.compile(r"(?<![:])`(?P<name>(?P<identifier>[a-z0-9_.]+)(\(\))?)`", re.I)
 	lines[:] = (regex.sub(replacer, line) for line in lines)
 
 
@@ -64,11 +64,12 @@ def get_replacer(
 
 	def get_type(match: re.Match[str]) -> str:
 		"""
-		Given a match for a dot-name, return the RST type
+		Given a match for a dot-identifier, return the RST type
 		"""
+		identifier = match.group("identifier")
 		name = match.group("name")
 		try:
-			obj, parent, name = dot_import(module, cls, name)
+			obj, parent, identifier = dot_import(module, cls, identifier)
 		except AttributeError:
 			location = None
 			if isinstance(doc_obj, FunctionType):
@@ -87,16 +88,18 @@ def get_replacer(
 		elif callable(obj):
 			role = ":py:meth:" if isinstance(parent, type) else ":py:func:"
 		elif isinstance(parent, ModuleType):
-			role = ":py:const:" if name.isupper() else ":py:data:"
+			role = ":py:const:" if identifier.isupper() else ":py:data:"
 		elif isinstance(parent, type):
 			role = ":py:attr:"
 		else:
 			role = ":py:obj:"
 		if isinstance(parent, ModuleType):
-			name = f"{name.removeprefix(parent.__name__+'.')} <{name}>"
+			ref = f"{name.removeprefix(parent.__name__+'.')} <{identifier}>"
 		elif isinstance(parent, type):
-			name = f"{name.removeprefix(parent.__module__+'.')} <{name}>"
-		return f"{role}`{name}`"
+			ref = f"{name.removeprefix(parent.__module__+'.')} <{identifier}>"
+		else:
+			ref = name
+		return f"{role}`{ref}`"
 
 	return get_type
 
