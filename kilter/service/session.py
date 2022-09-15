@@ -14,6 +14,9 @@ from collections.abc import AsyncGenerator
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from enum import Enum
+from ipaddress import IPv4Address
+from ipaddress import IPv6Address
+from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING
 from typing import AsyncContextManager
@@ -158,14 +161,51 @@ Indicates the end of a header list, after the last (current) header
 
 class Session:
 	"""
-	The kernel of a filter, providing an API for filters to access messages from and MTA
+	The kernel of a filter, providing an API for filters to access messages from an MTA
 	"""
 
 	if TYPE_CHECKING:
 		Self = TypeVar("Self", bound="Session")
 
+	host: str
+	"""
+	A hostname from a reverse address lookup performed when a client connects
+
+	If no name is found this value defaults to the standard presentation format for
+	`Session.address` surrounded by "[" and "]", e.g. "[192.0.2.100]"
+	"""
+
+	address: IPv4Address|IPv6Address|Path|None
+	"""
+	The address of the connected client, or None if unknown
+	"""
+
+	port: int
+	"""
+	The port of the connected client if applicable, or 0 otherwise
+	"""
+
+	macros: dict[str, str]
+	"""
+	A mapping of string replacements sent by the MTA
+
+	See `smfi_getsymval <https://pythonhosted.org/pymilter/milter_api/smfi_getsymval.html>`_
+	from `libmilter` for more information.
+
+	Warning:
+		The current implementation is very naïve and does not behave exactly like
+		`libmilter`, nor is it very robust.  It will definitely change in the future.
+	"""
+
 	headers: HeadersAccessor
+	"""
+	A `HeadersAccessor` object for accessing and modifying the message header fields
+	"""
+
 	body: BodyAccessor
+	"""
+	A `BodyAccessor` object for accessing and modifying the message body
+	"""
 
 	def __init__(
 		self,
