@@ -67,46 +67,51 @@ class Phase(int, Enum):
 	Users should not generally need to use these values, however an understanding of the
 	state-flow they represent is useful for understanding some error exception
 	raised by `Session` methods.
-
-	CONNECT:
-	  This phase is the starting phase of a session, during which a HELO/EHLO message may be
-	  awaited with `Session.helo()`.
-
-	MAIL:
-	  This phase is entered after HELO/EHLO, during which a MAIL message may be awaited with
-	  `Session.envelope_from()`.  The `Session.extension()` method may also be used to get
-	  the raw MAIL command with any extension arguments, or any other extension commands
-	  that the MTA does not support (if the MTA supports passing these commands to
-	  a filter).
-
-	ENVELOPE:
-	  This phase is entered after MAIL, during which any RCPT commands may be awaited with
-	  `Session.envelope_recipients()`.  The `Session.extension()` method may also be used to
-	  get the raw RCPT command with any extension arguments, or any other extension commands
-	  that the MTA does not support (if the MTA supports passing these commands to
-	  a filter).
-
-	HEADERS:
-	  This phase is entered after a DATA command, while message headers are processed.
-	  Headers may be iterated as they arrive, or be collected for later through the
-	  `Session.headers` object.
-
-	BODY:
-	  This phase is entered after a message's headers have been processed.  The raw message
-	  body may be iterated over in chunks through the `Session.body` object.
-
-	POST:
-	  This phase is entered once a message's body has been completed (or skipped).  During
-	  this phase the message editing methods of a `Session` object or the `Session.headers`
-	  and `Session.body` objects may be used.
 	"""
 
 	CONNECT = 1
+	"""
+	This phase is the starting phase of a session, during which a HELO/EHLO message may be
+	awaited with `Session.helo()`.
+	"""
+
 	MAIL = 2
+	"""
+	This phase is entered after HELO/EHLO, during which a MAIL message may be awaited with
+	`Session.envelope_from()`.  The `Session.extension()` method may also be used to get
+	the raw MAIL command with any extension arguments, or any other extension commands
+	that the MTA does not support (if the MTA supports passing these commands to
+	a filter).
+	"""
+
 	ENVELOPE = 3
+	"""
+	This phase is entered after MAIL, during which any RCPT commands may be awaited with
+	`Session.envelope_recipients()`.  The `Session.extension()` method may also be used to
+	get the raw RCPT command with any extension arguments, or any other extension commands
+	that the MTA does not support (if the MTA supports passing these commands to
+	a filter).
+	"""
+
 	HEADERS = 4
+	"""
+	This phase is entered after a DATA command, while message headers are processed.
+	Headers may be iterated as they arrive, or be collected for later through the
+	`Session.headers` object.
+	"""
+
 	BODY = 5
+	"""
+	This phase is entered after a message's headers have been processed.  The raw message
+	body may be iterated over in chunks through the `Session.body` object.
+	"""
+
 	POST = 6
+	"""
+	This phase is entered once a message's body has been completed (or skipped).  During
+	this phase the message editing methods of a `Session` object or the `Session.headers`
+	and `Session.body` objects may be used.
+	"""
 
 
 @dataclass
