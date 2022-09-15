@@ -118,6 +118,7 @@ class Position:
 	subject: Header|Literal["start"]|Literal["end"]
 
 
+@dataclass
 class Before(Position):
 	"""
 	Indicates a relative position preceding a subject `Header` in a header list
@@ -128,6 +129,7 @@ class Before(Position):
 	subject: Header
 
 
+@dataclass
 class After(Position):
 	"""
 	Indicates a relative position following a subject `Header` in a header list
