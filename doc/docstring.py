@@ -36,6 +36,7 @@ class UnknownObject(ValueError):
 
 def setup(app: Sphinx) -> dict[str, object]:
 	app.connect("autodoc-process-docstring", add_roles)
+	app.connect("autodoc-process-docstring", mark_admonitions)
 	return dict(
 		parallel_read_safe=True,
 	)
@@ -222,3 +223,18 @@ def dot_import_from(module: ModuleType, name: str) -> object:
 		return import_module("." + name, module.__name__)
 	except ModuleNotFoundError:
 		return getattr(module, name)
+
+
+def mark_admonitions(
+	app: Sphinx, what: ObjType, name: str, obj: object, options: object, lines: list[str],
+) -> None:
+	"""
+	Add markup for admonitions (notes, tips, warnings, etc.) in docstrings
+	"""
+	def replace(match: re.Match[str]) -> str:
+		return f".. {match.group(1)}::"
+	regex = re.compile(
+		r"(attention|caution|danger|error|hint|important|note|tip|warning):",
+		re.I,
+	)
+	lines[:] = (regex.sub(replace, line) for line in lines)
