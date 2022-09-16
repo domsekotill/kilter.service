@@ -28,8 +28,6 @@ classifiers = [
 
 [project.optional-dependencies]
 tests = [
-	"coverage[toml]",
-	"kodo.plugins.cover_test_context @ https://code.kodo.org.uk/dom/cover-plugin-test-context/-/archive/main/cover-plugin-test-context-main.zip",
 	"trio",
 ]
 docs = [

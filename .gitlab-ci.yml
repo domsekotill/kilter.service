@@ -78,7 +78,9 @@ Unit Tests:
   needs: [Pin]
   script:
   - pip install -r requirements.txt -e .[tests]
+    coverage[toml]
     pytest
+    "kodo.plugins.cover_test_context @ https://code.kodo.org.uk/dom/cover-plugin-test-context/-/archive/main/cover-plugin-test-context-main.zip"
   - coverage run -m pytest tests
     --verbose
     --junit-xml=results/xunit.xml
