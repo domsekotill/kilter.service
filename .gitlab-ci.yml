@@ -47,7 +47,7 @@ Build Package:
   script:
   - pip install build
   - python -m build
-  - (set dist/kilter_protocol-*.whl; mv "$1" "${1/kilter_protocol/kilter.protocol}")
+  - (set dist/kilter_service-*.whl; mv "$1" "${1/kilter_service/kilter.service}")
   artifacts:
     paths: [dist]
 
@@ -77,10 +77,8 @@ Unit Tests:
   extends: [.python]
   needs: [Pin]
   script:
-  - pip install -r requirements.txt -e .
-    coverage[toml]
+  - pip install -r requirements.txt -e .[tests]
     pytest
-    "kodo.plugins.cover_test_context @ https://code.kodo.org.uk/dom/cover-plugin-test-context/-/archive/main/cover-plugin-test-context-main.zip"
   - coverage run -m pytest tests
     --verbose
     --junit-xml=results/xunit.xml
