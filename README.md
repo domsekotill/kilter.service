@@ -128,7 +128,7 @@ async def strip_x_headers(session: Session) -> Accept:
   "GitLab"
 
 [gitlab-link]:
-  https://code.kodo.org.uk/dom/kilter.service
+  https://code.kodo.org.uk/kilter/kilter.service
   "Kilter Service at code.kodo.org.uk"
 
 [pre-commit-ico]:
@@ -144,14 +144,14 @@ async def strip_x_headers(session: Session) -> Accept:
   "Licence: Mozilla Public License 2.0"
 
 [pipeline-status]:
-  https://code.kodo.org.uk/dom/kilter.service/badges/main/pipeline.svg
+  https://code.kodo.org.uk/kilter/kilter.service/badges/main/pipeline.svg
 
 [pipeline-report]:
-  https://code.kodo.org.uk/dom/kilter.service/pipelines/latest
+  https://code.kodo.org.uk/kilter/kilter.service/pipelines/latest
   "Pipelines"
 
 [coverage status]:
-  https://code.kodo.org.uk/dom/kilter.service/badges/main/coverage.svg
+  https://code.kodo.org.uk/kilter/kilter.service/badges/main/coverage.svg
 
 [coverage report]:
-  https://code.kodo.org.uk/dom/kilter.service/-/jobs/artifacts/main/file/results/coverage/index.html?job=Unit+Tests
+  https://code.kodo.org.uk/kilter/kilter.service/-/jobs/artifacts/main/file/results/coverage/index.html?job=Unit+Tests
