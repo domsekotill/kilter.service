@@ -4,4 +4,7 @@ ignore=body-trailing-whitespace,body-is-missing
 [author-valid-email]
 regex=.*@[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9])+
 
+[ignore-body-lines]
+regex=^(Fixes|Closes):?\s+#[0-9]+
+
 # vim:ft=cfg
