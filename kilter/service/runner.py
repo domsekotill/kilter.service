@@ -37,6 +37,13 @@ MiB = 2**20
 _VALID_FINAL_RESPONSES = Reject, Discard, Accept, TemporaryFailure, ReplyCode
 _VALID_EVENT_MESSAGE = Helo, EnvelopeFrom, EnvelopeRecipient, Data, Unknown, \
 	Header, EndOfHeaders, Body, EndOfMessage
+_DISABLE_PROTOCOL_FLAGS = ProtocolFlags.NO_CONNECT | ProtocolFlags.NO_HELO | \
+	ProtocolFlags.NO_SENDER | ProtocolFlags.NO_RECIPIENT | ProtocolFlags.NO_BODY | \
+	ProtocolFlags.NO_HEADERS | ProtocolFlags.NO_EOH | ProtocolFlags.NO_UNKNOWN | \
+	ProtocolFlags.NO_DATA | ProtocolFlags.NR_CONNECT | ProtocolFlags.NR_HELO | \
+	ProtocolFlags.NR_SENDER | ProtocolFlags.NR_RECIPIENT | ProtocolFlags.NR_DATA | \
+	ProtocolFlags.NR_UNKNOWN | ProtocolFlags.NR_EOH | ProtocolFlags.NR_BODY | \
+	ProtocolFlags.NR_HEADER
 
 
 class NegotiationError(Exception):
@@ -151,7 +158,7 @@ class Runner:
 			raise NegotiationError("MTA does not accept all actions required by the filter")
 
 		resp = Negotiate(6, 0, 0)
-		resp.protocol_flags = message.protocol_flags
+		resp.protocol_flags = message.protocol_flags & ~_DISABLE_PROTOCOL_FLAGS
 		resp.action_flags = ActionFlags.pack(actions)
 
 		await sender.asend(resp)

@@ -30,8 +30,8 @@ class RunnerTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 
 			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, 0),
-				Negotiate(6, 0x1ff, 0),
+				Negotiate(6, 0x1ff, 0xff3ff),
+				Negotiate(6, 0x1ff, 0x00000),
 			)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 
@@ -52,11 +52,7 @@ class RunnerTests(AsyncTestCase):
 			tg.start_soon(test_filter, stream_mock.peer_stream)
 			await trio.testing.wait_all_tasks_blocked()
 
-			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, 0),
-				Negotiate(6, 0x1ff, 0),
-			)
-
+			await stream_mock.send_and_expect(Negotiate(6, 0x1ff, 0), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Reject)
 
 	async def test_post_header(self) -> None:
@@ -72,13 +68,9 @@ class RunnerTests(AsyncTestCase):
 			tg.start_soon(test_filter, stream_mock.peer_stream)
 			await trio.testing.wait_all_tasks_blocked()
 
-			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, 0),
-				Negotiate(6, 0x1ff, 0),
-			)
+			await stream_mock.send_and_expect(Negotiate(6, 0x1ff, 0), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 			await stream_mock.send_and_expect(Helo("test.example.com"), Continue)
-
 			await stream_mock.send_and_expect(EnvelopeFrom(b"test@example.com"), Accept)
 
 	async def test_body_all(self) -> None:
@@ -100,13 +92,8 @@ class RunnerTests(AsyncTestCase):
 			tg.start_soon(test_filter, stream_mock.peer_stream)
 			await trio.testing.wait_all_tasks_blocked()
 
-			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, 0),
-				Negotiate(6, 0x1ff, 0),
-			)
-
+			await stream_mock.send_and_expect(Negotiate(6, 0x1ff, 0), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
-
 			await stream_mock.send_and_expect(Body(b"This is a "), Continue)
 			await stream_mock.send_and_expect(Body(b"message sent "), Continue)
 			await stream_mock.send_and_expect(Body(b"in multiple chunks. "), Continue)
@@ -139,8 +126,8 @@ class RunnerTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 
 			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, ProtocolFlags.SKIP),
-				Negotiate(6, 0x1ff, ProtocolFlags.SKIP),
+				Negotiate(6, 0x1ff, 0xff3ff | ProtocolFlags.SKIP),
+				Negotiate(6, 0x1ff, 0x00000 | ProtocolFlags.SKIP),
 			)
 
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
@@ -179,13 +166,8 @@ class RunnerTests(AsyncTestCase):
 			tg.start_soon(test_filter, stream_mock.peer_stream)
 			await trio.testing.wait_all_tasks_blocked()
 
-			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, 0),
-				Negotiate(6, 0x1ff, 0),
-			)
-
+			await stream_mock.send_and_expect(Negotiate(6, 0x1ff, 0), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
-
 			await stream_mock.send_and_expect(Body(b"This is a "), Continue)
 			await stream_mock.send_and_expect(Body(b"message sent "), Continue)
 			await stream_mock.send_and_expect(Body(b"in multiple chunks. "), Continue)
@@ -236,8 +218,8 @@ class RunnerTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 
 			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, ProtocolFlags.SKIP),
-				Negotiate(6, 0x1ff, ProtocolFlags.SKIP),
+				Negotiate(6, 0x1ff, 0xff3ff | ProtocolFlags.SKIP),
+				Negotiate(6, 0x1ff, 0x00000 | ProtocolFlags.SKIP),
 			)
 
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
@@ -272,10 +254,7 @@ class RunnerTests(AsyncTestCase):
 			tg.start_soon(test_filter, stream_mock.peer_stream)
 			await trio.testing.wait_all_tasks_blocked()
 
-			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, 0),
-				Negotiate(6, 0x1ff, 0),
-			)
+			await stream_mock.send_and_expect(Negotiate(6, 0x1ff, 0), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 			await stream_mock.abort()
 
@@ -294,10 +273,7 @@ class RunnerTests(AsyncTestCase):
 			tg.start_soon(test_filter, stream_mock.peer_stream)
 			await trio.testing.wait_all_tasks_blocked()
 
-			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, 0),
-				Negotiate(6, 0x1ff, 0),
-			)
+			await stream_mock.send_and_expect(Negotiate(6, 0x1ff, 0), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 
 			with self.assertWarns(UserWarning) as wcm:
@@ -320,10 +296,7 @@ class RunnerTests(AsyncTestCase):
 			tg.start_soon(test_filter, stream_mock.peer_stream)
 			await trio.testing.wait_all_tasks_blocked()
 
-			await stream_mock.send_and_expect(
-				Negotiate(6, 0x1ff, 0),
-				Negotiate(6, 0x1ff, 0),
-			)
+			await stream_mock.send_and_expect(Negotiate(6, 0x1ff, 0), Negotiate)
 			await stream_mock.send_and_expect(
 				Macro(Connect.ident, {"{spam}": "yes", "{eggs}": "yes"}),
 			)
