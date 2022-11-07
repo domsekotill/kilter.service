@@ -97,7 +97,11 @@ class Runner:
 			while 1:
 				try:
 					buff[:] = await client.receive(buff.available)
-				except (anyio.EndOfStream, anyio.ClosedResourceError):
+				except (
+					anyio.EndOfStream,
+					anyio.ClosedResourceError,
+					anyio.BrokenResourceError,
+				):
 					for channel in channels:
 						await channel.aclose()
 					return
