@@ -389,3 +389,23 @@ class SessionTests(AsyncTestCase):
 			await session.deliver(Helo("test.example.com"))
 			await session.deliver(Macro(Helo.ident, {"{spam}": "no", "{ham}": "maybe"}))
 			await session.deliver(EnvelopeFrom(b"test@example.com"))
+
+	async def test_delay(self) -> None:
+		"""
+		Check that delays/awaits don't create race conditions
+		"""
+		sender = MockEditor()
+		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+
+		async def test_filter(session: Session) -> Accept:
+			await trio.sleep(0.1)
+			assert await session.helo() == "test.example.com"
+			assert await session.envelope_from() == "test@example.com"
+			return Accept()
+
+		async with trio.open_nursery() as tg:
+			tg.start_soon(test_filter, session)
+			await trio.testing.wait_all_tasks_blocked()
+
+			await session.deliver(Helo("test.example.com"))
+			await session.deliver(EnvelopeFrom(b"test@example.com"))
