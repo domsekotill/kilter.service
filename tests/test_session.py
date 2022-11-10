@@ -63,13 +63,12 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = "spam"
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			nonlocal result
 			result = await session.envelope_from()
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Helo("ham"))
 			assert result == "spam"
@@ -84,13 +83,12 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = "spam"
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			nonlocal result
 			result = await session.helo()
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Helo("eggs"))
 
@@ -102,15 +100,14 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.envelope_from()
 			with self.assertRaises(RuntimeError) as acm:
 				await session.helo()
 			assert "before" in str(acm.exception), str(acm.exception)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Helo("ham"))
 			await session.deliver(EnvelopeFrom(b"eggs"))
@@ -121,14 +118,13 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			with self.assertRaises(RuntimeError) as acm:
 				await session.helo()
 			assert "event not received" in str(acm.exception), str(acm.exception)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EnvelopeFrom(b"eggs"))
 
@@ -139,13 +135,12 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = "spam"
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			nonlocal result
 			result = await session.envelope_from()
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EnvelopeFrom(b"eggs"))
 
@@ -157,15 +152,14 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.collect()
 			with self.assertRaises(RuntimeError) as acm:
 				await session.envelope_from()
 			assert "before" in str(acm.exception), str(acm.exception)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"eggs"))
 			await session.deliver(EndOfHeaders())
@@ -176,14 +170,13 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			with self.assertRaises(RuntimeError) as acm:
 				await session.envelope_from()
 			assert "event not received" in str(acm.exception), str(acm.exception)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Data())
 
@@ -194,13 +187,12 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			async for rcpt in session.envelope_recipients():
 				result.append(rcpt)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EnvelopeRecipient(b"spam", []))
 			await session.deliver(EnvelopeRecipient(b"spam", []))
@@ -215,16 +207,15 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.collect()
 			with self.assertRaises(RuntimeError) as acm:
 				async for rcpt in session.envelope_recipients():
 					pass
 			assert "before" in str(acm.exception), str(acm.exception)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"eggs"))
 			await session.deliver(EndOfHeaders())
@@ -236,15 +227,14 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			result.append(await session.extension("SPAM"))
 			result.append(await session.extension("MAIL"))
 			result.append(await session.extension("RCPT"))
 			result.append(await session.extension("RCPT"))
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Unknown(b"SPAM spam eggs"))
 			await session.deliver(EnvelopeFrom(b"spam", [b"spam", b"eggs"]))
@@ -266,15 +256,14 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.collect()
 			with self.assertRaises(RuntimeError) as acm:
 				await session.extension("TEST")
 			assert "before" in str(acm.exception), str(acm.exception)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"eggs"))
 			await session.deliver(EndOfHeaders())
@@ -285,14 +274,13 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			with self.assertRaises(RuntimeError) as acm:
 				await session.extension("TEST")
 			assert "event not received" in str(acm.exception), str(acm.exception)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Data())
 
@@ -303,15 +291,14 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			assert session.phase == Phase.CONNECT
 			await session.change_sender("test@example.com")
 			assert session.phase == Phase.POST
 			await session.change_sender("test@example.com", "SPAM")
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EndOfMessage(b""))
 
@@ -327,15 +314,14 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			assert session.phase == Phase.CONNECT
 			await session.add_recipient("test@example.com")
 			assert session.phase == Phase.POST
 			await session.add_recipient("test@example.com", "SPAM")
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EndOfMessage(b""))
 
@@ -351,14 +337,13 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			assert session.phase == Phase.CONNECT
 			await session.remove_recipient("test@example.com")
 			assert session.phase == Phase.POST
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EndOfMessage(b""))
 
@@ -373,16 +358,15 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			self.assertDictEqual(session.macros, {})
 			await session.helo()
 			self.assertDictEqual(session.macros, {"{spam}": "yes", "{eggs}": "yes"})
 			await session.envelope_from()
 			self.assertDictEqual(session.macros, {"{spam}": "no", "{ham}": "maybe", "{eggs}": "yes"})
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 
 			await session.deliver(Macro(Helo.ident, {"{spam}": "yes", "{eggs}": "yes"}))
@@ -397,14 +381,13 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await trio.sleep(0.1)
 			assert await session.helo() == "test.example.com"
 			assert await session.envelope_from() == "test@example.com"
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 
 			await session.deliver(Helo("test.example.com"))

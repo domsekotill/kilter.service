@@ -23,15 +23,14 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = b""
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			nonlocal result
 			async with session.body as body:
 				async for chunk in body:
 					result += chunk
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Body(b"Spam, "))
 			await session.deliver(Body(b"spam, "))
@@ -47,7 +46,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		result1 = b""
 		result2 = b""
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			nonlocal result1
 			nonlocal result2
 
@@ -61,10 +60,9 @@ class HeaderAccessorTests(AsyncTestCase):
 				async for chunk in body:
 					result2 += chunk
 
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			assert Continue == await session.deliver(Body(b"Spam, "))
 			assert Skip == await session.deliver(Body(b"spam, "))
@@ -88,12 +86,11 @@ class HeaderAccessorTests(AsyncTestCase):
 			return s.content == o.content
 		ReplaceBody.__eq__ = _eq  # type: ignore
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.body.write(b"A new message")
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EndOfMessage(b""))
 

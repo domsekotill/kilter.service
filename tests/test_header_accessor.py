@@ -25,14 +25,13 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			async with session.headers as headers:
 				async for header in headers:
 					result.append(header.name)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Spam", b"spam?"))
@@ -52,7 +51,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		result1 = []
 		result2 = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			async with session.headers as headers:
 				async for header in headers:
 					result1.append(header.name)
@@ -65,10 +64,9 @@ class HeaderAccessorTests(AsyncTestCase):
 				async for header in headers:
 					result2.append(header.name)
 
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Spam", b"spam?"))
@@ -90,7 +88,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.collect()
 
 			async with session.headers as headers:
@@ -98,10 +96,9 @@ class HeaderAccessorTests(AsyncTestCase):
 					assert session.phase == Phase.BODY
 					result.append(header.name)
 
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Spam", b"spam?"))
@@ -117,7 +114,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.collect()
 
 			async with session.headers as headers:
@@ -125,10 +122,9 @@ class HeaderAccessorTests(AsyncTestCase):
 					assert session.phase == Phase.BODY
 					result.append(header.name)
 
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Spam", b"spam?"))
@@ -144,14 +140,13 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			async with session.headers as headers:
 				async for header in headers.restrict("Spam", "Ham"):
 					result.append(header.name)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Spam", b"spam?"))
@@ -169,16 +164,15 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.collect()
 			await session.headers.delete(Header("Spam", b"spam?"))
 			async with session.headers as headers:
 				async for header in headers:
 					result.append(header)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Spam", b"spam?"))
@@ -202,15 +196,14 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.update(Header("Spam", b"spam?"), b"no spam!")
 			async with session.headers as headers:
 				async for header in headers:
 					result.append(header)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Spam", b"spam?"))
@@ -235,15 +228,14 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.insert(Header("Ham", b"and eggs"), START)
 			async with session.headers as headers:
 				async for header in headers:
 					result.append(header)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Eggs", b"and spam"))
@@ -265,15 +257,14 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.insert(Header("Ham", b"and eggs"), END)
 			async with session.headers as headers:
 				async for header in headers:
 					result.append(header)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Eggs", b"and spam"))
@@ -295,7 +286,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.insert(
 				Header("Ham", b"and eggs"),
 				Before(Header("Eggs", b"and spam")),
@@ -303,10 +294,9 @@ class HeaderAccessorTests(AsyncTestCase):
 			async with session.headers as headers:
 				async for header in headers:
 					result.append(header)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Eggs", b"and spam"))
@@ -328,7 +318,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.insert(
 				Header("Ham", b"and eggs"),
 				After(Header("Spam", b"spam spam spam")),
@@ -336,10 +326,9 @@ class HeaderAccessorTests(AsyncTestCase):
 			async with session.headers as headers:
 				async for header in headers:
 					result.append(header)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Eggs", b"and spam"))
@@ -361,7 +350,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.insert(
 				Header("Ham", b"and eggs"),
 				After(Header("Eggs", b"and spam")),
@@ -369,10 +358,9 @@ class HeaderAccessorTests(AsyncTestCase):
 			async with session.headers as headers:
 				async for header in headers:
 					result.append(header)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Eggs", b"and spam"))
@@ -394,7 +382,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			await session.headers.insert(
 				Header("Ham", b"and eggs"),
 				Before(Header("Eggs", b"and spam")),
@@ -406,10 +394,9 @@ class HeaderAccessorTests(AsyncTestCase):
 			async with session.headers as headers:
 				async for header in headers:
 					result.append(header)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("Spam", b"spam spam spam"))
 			await session.deliver(Header("Eggs", b"and spam"))
@@ -433,14 +420,13 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			async with session.headers as headers:
 				assert Header("From", b"test@example.com") == await headers.asend()
 				assert Header("To", b"test@example.com") == await headers.asend(None)
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("From", b"test@example.com"))
 			await session.deliver(Header("To", b"test@example.com"))
@@ -452,17 +438,16 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			async with session.headers as headers:
 				await headers.asend()
 				with self.assertRaises(ValueError):
 					await headers.athrow(ValueError)
 				with self.assertRaises(StopAsyncIteration):
 					await headers.asend()
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("From", b"test@example.com"))
 			await session.deliver(Header("To", b"test@example.com"))
@@ -474,7 +459,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			async with session.headers as headers:
 				await headers.asend()
 				with self.assertRaises(ValueError) as acm:
@@ -482,10 +467,9 @@ class HeaderAccessorTests(AsyncTestCase):
 				assert "a message" == str(acm.exception), str(acm.exception)
 				with self.assertRaises(StopAsyncIteration):
 					await headers.asend()
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("From", b"test@example.com"))
 			await session.deliver(Header("To", b"test@example.com"))
@@ -497,7 +481,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
-		async def test_filter(session: Session) -> Accept:
+		async def test_filter() -> None:
 			async with session.headers as headers:
 				await headers.asend()
 				with self.assertRaises(ValueError) as acm:
@@ -505,10 +489,9 @@ class HeaderAccessorTests(AsyncTestCase):
 				assert "a message" == str(acm.exception), str(acm.exception)
 				with self.assertRaises(StopAsyncIteration):
 					await headers.asend()
-			return Accept()
 
 		async with trio.open_nursery() as tg:
-			tg.start_soon(test_filter, session)
+			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Header("From", b"test@example.com"))
 			await session.deliver(Header("To", b"test@example.com"))
