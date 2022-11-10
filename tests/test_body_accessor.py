@@ -7,6 +7,7 @@ from kilter.service import *
 
 from . import AsyncTestCase
 from .mock_editor import MockEditor
+from .util_session import with_session
 
 LOCALHOST = IPv4Address("127.0.0.1")
 
@@ -23,6 +24,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = b""
 
+		@with_session(session)
 		async def test_filter() -> None:
 			nonlocal result
 			async with session.body as body:
@@ -46,6 +48,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		result1 = b""
 		result2 = b""
 
+		@with_session(session)
 		async def test_filter() -> None:
 			nonlocal result1
 			nonlocal result2
@@ -86,6 +89,7 @@ class HeaderAccessorTests(AsyncTestCase):
 			return s.content == o.content
 		ReplaceBody.__eq__ = _eq  # type: ignore
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.body.write(b"A new message")
 

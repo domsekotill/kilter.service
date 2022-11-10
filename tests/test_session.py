@@ -9,6 +9,7 @@ from kilter.service.session import Session
 
 from . import AsyncTestCase
 from .mock_editor import MockEditor
+from .util_session import with_session
 
 LOCALHOST = IPv4Address("127.0.0.1")
 
@@ -63,6 +64,7 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = "spam"
 
+		@with_session(session)
 		async def test_filter() -> None:
 			nonlocal result
 			result = await session.envelope_from()
@@ -83,6 +85,7 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = "spam"
 
+		@with_session(session)
 		async def test_filter() -> None:
 			nonlocal result
 			result = await session.helo()
@@ -100,6 +103,7 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.envelope_from()
 			with self.assertRaises(RuntimeError) as acm:
@@ -118,6 +122,7 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			with self.assertRaises(RuntimeError) as acm:
 				await session.helo()
@@ -135,6 +140,7 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = "spam"
 
+		@with_session(session)
 		async def test_filter() -> None:
 			nonlocal result
 			result = await session.envelope_from()
@@ -152,6 +158,7 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.collect()
 			with self.assertRaises(RuntimeError) as acm:
@@ -170,6 +177,7 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			with self.assertRaises(RuntimeError) as acm:
 				await session.envelope_from()
@@ -187,6 +195,7 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			async for rcpt in session.envelope_recipients():
 				result.append(rcpt)
@@ -207,6 +216,7 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.collect()
 			with self.assertRaises(RuntimeError) as acm:
@@ -227,6 +237,7 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			result.append(await session.extension("SPAM"))
 			result.append(await session.extension("MAIL"))
@@ -256,6 +267,7 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.collect()
 			with self.assertRaises(RuntimeError) as acm:
@@ -274,6 +286,7 @@ class SessionTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			with self.assertRaises(RuntimeError) as acm:
 				await session.extension("TEST")
@@ -291,6 +304,7 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
+		@with_session(session)
 		async def test_filter() -> None:
 			assert session.phase == Phase.CONNECT
 			await session.change_sender("test@example.com")
@@ -314,6 +328,7 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
+		@with_session(session)
 		async def test_filter() -> None:
 			assert session.phase == Phase.CONNECT
 			await session.add_recipient("test@example.com")
@@ -337,6 +352,7 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
+		@with_session(session)
 		async def test_filter() -> None:
 			assert session.phase == Phase.CONNECT
 			await session.remove_recipient("test@example.com")
@@ -358,6 +374,7 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
+		@with_session(session)
 		async def test_filter() -> None:
 			self.assertDictEqual(session.macros, {})
 			await session.helo()
@@ -381,6 +398,7 @@ class SessionTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await trio.sleep(0.1)
 			assert await session.helo() == "test.example.com"

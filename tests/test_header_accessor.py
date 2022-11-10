@@ -9,6 +9,7 @@ from kilter.service.session import Phase
 
 from . import AsyncTestCase
 from .mock_editor import MockEditor
+from .util_session import with_session
 
 LOCALHOST = IPv4Address("127.0.0.1")
 
@@ -25,6 +26,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			async with session.headers as headers:
 				async for header in headers:
@@ -51,6 +53,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		result1 = []
 		result2 = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			async with session.headers as headers:
 				async for header in headers:
@@ -88,6 +91,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.collect()
 
@@ -114,6 +118,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.collect()
 
@@ -140,6 +145,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			async with session.headers as headers:
 				async for header in headers.restrict("Spam", "Ham"):
@@ -164,6 +170,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.collect()
 			await session.headers.delete(Header("Spam", b"spam?"))
@@ -196,6 +203,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.update(Header("Spam", b"spam?"), b"no spam!")
 			async with session.headers as headers:
@@ -228,6 +236,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.insert(Header("Ham", b"and eggs"), START)
 			async with session.headers as headers:
@@ -257,6 +266,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.insert(Header("Ham", b"and eggs"), END)
 			async with session.headers as headers:
@@ -286,6 +296,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.insert(
 				Header("Ham", b"and eggs"),
@@ -318,6 +329,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.insert(
 				Header("Ham", b"and eggs"),
@@ -350,6 +362,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.insert(
 				Header("Ham", b"and eggs"),
@@ -382,6 +395,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 		result = []
 
+		@with_session(session)
 		async def test_filter() -> None:
 			await session.headers.insert(
 				Header("Ham", b"and eggs"),
@@ -420,6 +434,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			async with session.headers as headers:
 				assert Header("From", b"test@example.com") == await headers.asend()
@@ -438,6 +453,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			async with session.headers as headers:
 				await headers.asend()
@@ -459,6 +475,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			async with session.headers as headers:
 				await headers.asend()
@@ -481,6 +498,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 
+		@with_session(session)
 		async def test_filter() -> None:
 			async with session.headers as headers:
 				await headers.asend()
