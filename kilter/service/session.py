@@ -231,9 +231,11 @@ class Session:
 		self.phase = Phase.CONNECT
 
 	async def __aenter__(self: Self) -> Self:
+		await self._broadcast.__aenter__()
 		return self
 
 	async def __aexit__(self, *_: object) -> None:
+		await self._broadcast.__aexit__(None, None, None)
 		# on session close, wake up any remaining deliver() awaitables
 		await self._broadcast.aclose()
 
@@ -248,15 +250,17 @@ class Session:
 				self.macros.update(message.macros)
 				return Continue  # not strictly necessary, but type checker needs something
 			case Helo():
-				self.phase = Phase.MAIL
+				phase = Phase.MAIL
 			case EnvelopeFrom() | EnvelopeRecipient() | Unknown():
-				self.phase = Phase.ENVELOPE
+				phase = Phase.ENVELOPE
 			case Data() | Header():
-				self.phase = Phase.HEADERS
+				phase = Phase.HEADERS
 			case EndOfHeaders() | Body():
-				self.phase = Phase.BODY
+				phase = Phase.BODY
 			case EndOfMessage():  # pragma: no-branch
-				self.phase = Phase.POST
+				phase = Phase.POST
+		async with self._broadcast:
+			self.phase = phase  # phase attribute must be modified in locked context
 		await self._broadcast.send(message)
 		return Skip if self.phase == Phase.BODY and self.skip else Continue
 
@@ -269,11 +273,10 @@ class Session:
 				"Session.helo() must be awaited before any other async features of a "
 				"Session",
 			)
-		async with self._broadcast:
-			while self.phase <= Phase.CONNECT:
-				message = await self._broadcast.receive()
-				if isinstance(message, Helo):
-					return message.hostname
+		while self.phase <= Phase.CONNECT:
+			message = await self._broadcast.receive()
+			if isinstance(message, Helo):
+				return message.hostname
 		raise RuntimeError("HELO/EHLO event not received")
 
 	async def envelope_from(self) -> str:
@@ -287,11 +290,10 @@ class Session:
 			raise RuntimeError(
 				"Session.envelope_from() may only be awaited before the ENVELOPE phase",
 			)
-		async with self._broadcast:
-			while self.phase <= Phase.MAIL:
-				message = await self._broadcast.receive()
-				if isinstance(message, EnvelopeFrom):
-					return bytes(message.sender).decode()
+		while self.phase <= Phase.MAIL:
+			message = await self._broadcast.receive()
+			if isinstance(message, EnvelopeFrom):
+				return bytes(message.sender).decode()
 		raise RuntimeError("MAIL event not received")
 
 	async def envelope_recipients(self) -> AsyncIterator[str]:
@@ -305,11 +307,10 @@ class Session:
 			raise RuntimeError(
 				"Session.envelope_from() may only be awaited before the HEADERS phase",
 			)
-		async with self._broadcast:
-			while self.phase <= Phase.ENVELOPE:
-				message = await self._broadcast.receive()
-				if isinstance(message, EnvelopeRecipient):
-					yield bytes(message.recipient).decode()
+		while self.phase <= Phase.ENVELOPE:
+			message = await self._broadcast.receive()
+			if isinstance(message, EnvelopeRecipient):
+				yield bytes(message.recipient).decode()
 
 	async def extension(self, name: str) -> memoryview:
 		"""
@@ -319,21 +320,20 @@ class Session:
 			raise RuntimeError(
 				"Session.extension() may only be awaited before the HEADERS phase",
 			)
-		async with self._broadcast:
-			while self.phase <= Phase.ENVELOPE:
-				message = await self._broadcast.receive()
-				match message:
-					case Unknown():
-						bname = name.encode("utf-8")
-						if message.content[:len(bname)] == bname:
-							return message.content
-					# fake buffers for MAIL and RCPT commands
-					case EnvelopeFrom() if name == "MAIL":
-						vals = [b"MAIL FROM", message.sender, *message.arguments]
-						return memoryview(b" ".join(vals))
-					case EnvelopeRecipient() if name == "RCPT":
-						vals = [b"RCPT TO", message.recipient, *message.arguments]
-						return memoryview(b" ".join(vals))
+		while self.phase <= Phase.ENVELOPE:
+			message = await self._broadcast.receive()
+			match message:
+				case Unknown():
+					bname = name.encode("utf-8")
+					if message.content[:len(bname)] == bname:
+						return message.content
+				# fake buffers for MAIL and RCPT commands
+				case EnvelopeFrom() if name == "MAIL":
+					vals = [b"MAIL FROM", message.sender, *message.arguments]
+					return memoryview(b" ".join(vals))
+				case EnvelopeRecipient() if name == "RCPT":
+					vals = [b"RCPT TO", message.recipient, *message.arguments]
+					return memoryview(b" ".join(vals))
 		raise RuntimeError(f"{name} event not received")
 
 	async def change_sender(self, sender: str, args: str = "") -> None:
@@ -383,22 +383,21 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 		await self._aiter.aclose()
 
 	async def __aiter(self) -> AsyncGenerator[Header, None]:
-		async with self.session._broadcast:
-			# yield from cached headers first; allows multiple tasks to access the headers
-			# in an uncoordinated manner; note the broadcaster is locked at this point
-			for header in self._table:
-				yield header
-			while self.session.phase <= Phase.HEADERS:
-				match (await self.session._broadcast.receive()):
-					case Header() as header:
-						self._table.append(header)
-						try:
-							yield header
-						except GeneratorExit:
-							await self._collect()
-							raise
-					case EndOfHeaders():
-						return
+		# yield from cached headers first; allows multiple tasks to access the headers
+		# in an uncoordinated manner; note the broadcaster is locked at this point
+		for header in self._table:
+			yield header
+		while self.session.phase <= Phase.HEADERS:
+			match (await self.session._broadcast.receive()):
+				case Header() as header:
+					self._table.append(header)
+					try:
+						yield header
+					except GeneratorExit:
+						await self.collect()
+						raise
+				case EndOfHeaders():
+					return
 
 	async def collect(self) -> None:
 		"""
@@ -407,10 +406,6 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 		Calling this method before the `Phase.BODY` phase allows later processing of headers
 		(after the HEADER phase) without the need for an empty loop.
 		"""
-		async with self.session._broadcast:
-			await self._collect()
-
-	async def _collect(self) -> None:
 		# note the similarities between this and __aiter; the difference is no mutex or
 		# yields
 		while self.session.phase <= Phase.HEADERS:
@@ -530,18 +525,17 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 		await self._aiter.aclose()
 
 	async def __aiter(self) -> AsyncGenerator[memoryview, None]:
-		async with self.session._broadcast:
-			while self.session.phase <= Phase.BODY:
-				match (await self.session._broadcast.receive()):
-					case Body() as body:
-						try:
-							yield body.content
-						except GeneratorExit:
-							self.session.skip = True
-							raise
-					case EndOfMessage() as eom:
-						if not self.session.skip:
-							yield eom.content
+		while self.session.phase <= Phase.BODY:
+			match (await self.session._broadcast.receive()):
+				case Body() as body:
+					try:
+						yield body.content
+					except GeneratorExit:
+						self.session.skip = True
+						raise
+				case EndOfMessage() as eom:
+					if not self.session.skip:
+						yield eom.content
 
 	async def write(self, chunk: bytes) -> None:
 		"""
@@ -554,6 +548,5 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 async def _until_editable(session: Session) -> None:
 	if session.phase == Phase.POST:
 		return
-	async with session._broadcast:
-		while session.phase < Phase.POST:
-			await session._broadcast.receive()
+	while session.phase < Phase.POST:
+		await session._broadcast.receive()
