@@ -85,3 +85,21 @@ class BroadcastTests(AsyncTestCase):
 				await broadcast.send(n)
 
 		assert messages == [1, 1, 2, 2, 3, 3, 4, 4]
+
+	async def test_abort(self) -> None:
+		"""
+		Check that aborting with multiple listeners works
+		"""
+		broadcast = Broadcast[int]()
+
+		async def listener() -> None:
+			async with broadcast:
+				with self.assertRaises(ValueError):
+					_ = await broadcast.receive()
+
+		async with trio.open_nursery() as task_group:
+			task_group.start_soon(listener)
+			task_group.start_soon(listener)
+			await trio.testing.wait_all_tasks_blocked()
+
+			await broadcast.abort(ValueError)
