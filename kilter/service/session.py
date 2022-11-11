@@ -331,11 +331,11 @@ class Session:
 			raise RuntimeError(
 				"Session.extension() may only be awaited before the HEADERS phase",
 			)
+		bname = name.encode("utf-8")
 		while self.phase <= Phase.ENVELOPE:
 			message = await self._broadcast.receive()
 			match message:
 				case Unknown():
-					bname = name.encode("utf-8")
 					if message.content[:len(bname)] == bname:
 						return message.content
 				# fake buffers for MAIL and RCPT commands
