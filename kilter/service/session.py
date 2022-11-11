@@ -32,7 +32,7 @@ from . import util
 EventMessage: TypeAlias = Union[
 	Connect, Helo, EnvelopeFrom, EnvelopeRecipient, Data, Unknown,
 	Header, EndOfHeaders, Body, EndOfMessage,
-	Macro,
+	Macro, Abort,
 ]
 """
 Messages sent from an MTA to a filter
@@ -53,6 +53,12 @@ EditMessage: TypeAlias = Union[
 """
 Messages send from a filter to an MTA after an `EndOfMessage` to modify a message
 """
+
+
+class Aborted(BaseException):
+	"""
+	An exception for aborting filters on receipt of an Abort message
+	"""
 
 
 class Filter(Protocol):
@@ -249,6 +255,11 @@ class Session:
 			case Macro():
 				self.macros.update(message.macros)
 				return Continue  # not strictly necessary, but type checker needs something
+			case Abort():
+				async with self._broadcast:
+					self.phase = Phase.CONNECT
+				await self._broadcast.abort(Aborted)
+				return Continue
 			case Helo():
 				phase = Phase.MAIL
 			case EnvelopeFrom() | EnvelopeRecipient() | Unknown():

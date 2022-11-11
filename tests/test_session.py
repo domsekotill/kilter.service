@@ -4,6 +4,7 @@ from unittest.mock import call
 import trio.testing
 
 from kilter.protocol import *
+from kilter.service.session import Aborted
 from kilter.service.session import Phase
 from kilter.service.session import Session
 
@@ -410,3 +411,28 @@ class SessionTests(AsyncTestCase):
 
 			await session.deliver(Helo("test.example.com"))
 			await session.deliver(EnvelopeFrom(b"test@example.com"))
+
+	async def test_abort_in_helo(self) -> None:
+		"""
+		Check that receipt of Abort while awaiting Helo raises Aborted and resets
+		"""
+		sender = MockEditor()
+		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+
+		@with_session(session)
+		async def test_filter() -> None:
+			assert session.phase == Phase.CONNECT
+			assert await session.helo() == "test.example.org"
+			assert session.phase == Phase.MAIL
+			with self.assertRaises(Aborted):
+				await session.extension("MAIL")
+			assert session.phase == Phase.CONNECT
+			assert await session.helo() == "test.example.com"
+
+		async with trio.open_nursery() as tg:
+			tg.start_soon(test_filter)
+			await trio.testing.wait_all_tasks_blocked()
+
+			await session.deliver(Helo("test.example.org"))
+			await session.deliver(Abort())
+			await session.deliver(Helo("test.example.com"))
