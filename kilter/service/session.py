@@ -243,7 +243,7 @@ class Session:
 	async def __aexit__(self, *_: object) -> None:
 		await self._broadcast.__aexit__(None, None, None)
 		# on session close, wake up any remaining deliver() awaitables
-		await self._broadcast.aclose()
+		await self._broadcast.shutdown_hook()
 
 	async def deliver(self, message: EventMessage) -> type[Continue]|type[Skip]:
 		"""

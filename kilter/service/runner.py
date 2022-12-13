@@ -58,7 +58,7 @@ class _Broadcast(Broadcast[EventMessage]):
 		super().__init__()
 		self._ready = anyio.Condition()
 
-	async def aclose(self) -> None:
+	async def shutdown_hook(self) -> None:
 		async with self._ready:
 			self._ready.notify_all()
 

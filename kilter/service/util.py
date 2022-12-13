@@ -44,7 +44,7 @@ class Broadcast(anyio.Condition, Generic[T]):
 		A hook for subclasses to inject synchronisation instructions after sending objects
 		"""  # noqa: D401
 
-	async def aclose(self) -> None:
+	async def shutdown_hook(self) -> None:
 		"""
 		A hook for subclasses to inject cleanup or synchronisation instructions on close
 
