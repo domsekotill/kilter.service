@@ -230,8 +230,6 @@ class Session:
 		self.headers = HeadersAccessor(self, sender)
 		self.body = BodyAccessor(self, sender)
 
-		self.skip = False
-
 		# Phase checking is a bit fuzzy as a filter may not request every message,
 		# so some phases will be skipped; checks should not try to exactly match a phase.
 		self.phase = Phase.CONNECT
@@ -250,7 +248,7 @@ class Session:
 		Deliver a message (or its contents) to a task waiting for it
 		"""
 		match message:
-			case Body() if self.skip:
+			case Body() if self.body.skip:
 				return Skip
 			case Macro():
 				self.macros.update(message.macros)
@@ -273,7 +271,7 @@ class Session:
 		async with self.broadcast:
 			self.phase = phase  # phase attribute must be modified in locked context
 		await self.broadcast.send(message)
-		return Skip if self.phase == Phase.BODY and self.skip else Continue
+		return Skip if self.phase == Phase.BODY and self.body.skip else Continue
 
 	async def helo(self) -> str:
 		"""
@@ -527,6 +525,7 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 	def __init__(self, session: Session, sender: AsyncGenerator[None, EditMessage]):
 		self.session = session
 		self._editor = sender
+		self.skip = False
 
 	async def __aenter__(self) -> AsyncIterator[memoryview]:
 		self._aiter = self.__aiter()
@@ -542,10 +541,10 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 					try:
 						yield body.content
 					except GeneratorExit:
-						self.session.skip = True
+						self.skip = True
 						raise
 				case EndOfMessage() as eom:
-					if not self.session.skip:
+					if not self.skip:
 						yield eom.content
 
 	async def write(self, chunk: bytes) -> None:
