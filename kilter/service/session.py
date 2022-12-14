@@ -25,6 +25,7 @@ from typing import Protocol
 from typing import TypeAlias
 from typing import TypeVar
 from typing import Union
+from warnings import warn
 
 from ..protocol.messages import *
 from . import util
@@ -517,7 +518,7 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 	"""
 	A class that allows access and modification of the message body sent from an MTA
 
-	To access chunks of abody (which are only available iteratively), use an instance as an
+	To access chunks of a body (which are only available iteratively), use an instance as an
 	asynchronous context manager; an asynchronous iterator is returned when the context is
 	entered.
 	"""
@@ -526,13 +527,17 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 		self.session = session
 		self._editor = sender
 		self.skip = False
+		self._aiter: AsyncGenerator[memoryview, None] | None = None
 
 	async def __aenter__(self) -> AsyncIterator[memoryview]:
-		self._aiter = self.__aiter()
+		if self._aiter is None:
+			self._aiter = self.__aiter()
 		return self._aiter
 
 	async def __aexit__(self, *_: object) -> None:
+		assert self._aiter is not None
 		await self._aiter.aclose()
+		self._aiter = None
 
 	async def __aiter(self) -> AsyncGenerator[memoryview, None]:
 		while self.session.phase <= Phase.BODY:
@@ -550,7 +555,17 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 	async def write(self, chunk: bytes) -> None:
 		"""
 		Request that chunks of a new message body are sent to the MTA
+
+		This method should not be called from within the scope created by using it's
+		instance as an async context (`async with`); doing so may cause a warning to be
+		issued and the rest of the message body to be skipped.
 		"""
+		if self._aiter is not None and not self.skip:
+			warn(
+				"it looks as if BodyAccessor.write() was called on an instance from within "
+				"it's own async context",
+				stacklevel=2,
+			)
 		await _until_editable(self.session)
 		await self._editor.asend(ReplaceBody(chunk))
 
@@ -558,5 +573,6 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 async def _until_editable(session: Session) -> None:
 	if session.phase == Phase.POST:
 		return
+	session.body.skip = True
 	while session.phase < Phase.POST:
 		await session.broadcast.receive()
