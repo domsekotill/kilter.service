@@ -56,7 +56,6 @@ class _Broadcast(Broadcast[EventMessage]):
 
 	def __init__(self) -> None:
 		super().__init__()
-		self._ready = anyio.Condition()
 		self.task_status: anyio.abc.TaskStatus|None = None
 
 	async def shutdown_hook(self) -> None:
@@ -66,15 +65,6 @@ class _Broadcast(Broadcast[EventMessage]):
 		if self.task_status is not None:
 			self.task_status.started()
 			self.task_status = None
-		async with self._ready:
-			self._ready.notify_all()
-
-	async def post_send_hook(self) -> None:
-		# Await notification of either a receiver waiting or the broadcaster closing
-		# This is necessary to delay returning until a filter has had a chance to return
-		# a result.
-		async with self._ready:
-			await self._ready.wait()
 
 
 class Runner:
