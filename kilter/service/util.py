@@ -8,8 +8,11 @@
 Common helper utilities
 """
 
+# mypy: disallow-any-explicit=False
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Generic
 from typing import Optional
 from typing import TypeVar
@@ -17,6 +20,7 @@ from typing import TypeVar
 import anyio
 
 T = TypeVar("T")
+Fn = TypeVar("Fn", bound=Callable[..., object])
 
 
 class Broadcast(anyio.Condition, Generic[T]):
@@ -94,3 +98,12 @@ class Broadcast(anyio.Condition, Generic[T]):
 			raise self.exc
 		assert self.obj is not None
 		return self.obj
+
+
+def qualname(func: Fn) -> str:
+	"""
+	Return a qualified name for a callable
+	"""
+	if func.__module__ == "__main__":
+		return func.__qualname__
+	return f"{func.__module__}.{func.__qualname__}"

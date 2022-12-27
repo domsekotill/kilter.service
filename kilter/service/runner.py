@@ -14,6 +14,7 @@ The primary class in this module (`Runner`) is intended to be used with an
 
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncGenerator
 from warnings import warn
 
@@ -27,6 +28,7 @@ from kilter.protocol.messages import ProtocolFlags
 
 from .session import *
 from .util import Broadcast
+from .util import qualname
 
 MessageChannel = anyio.abc.ObjectStream[Message]
 Sender = AsyncGenerator[None, Message]
@@ -219,9 +221,13 @@ async def _runner(
 		async with session:
 			assert isinstance(session.broadcast, _Broadcast)
 			session.broadcast.task_status = task_status
-			final_resp = await fltr(session)
+			try:
+				final_resp = await fltr(session)
+			except Exception:
+				logging.exception(f"error in filter {qualname(fltr)}")
+				final_resp = TemporaryFailure()
 		if not isinstance(final_resp, _VALID_FINAL_RESPONSES):
-			warn(f"expected a final response from {fltr}, got {final_resp}")
+			warn(f"expected a valid response from {qualname(fltr)}, got {final_resp}")
 			final_resp = TemporaryFailure()
 
 	async with anyio.create_task_group() as tasks:

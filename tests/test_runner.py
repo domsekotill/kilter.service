@@ -309,7 +309,7 @@ class RunnerTests(AsyncTestCase):
 			with self.assertWarns(UserWarning) as wcm:
 				await stream_mock.send_and_expect(Helo("test.example.com"), TemporaryFailure)
 
-			assert "expected a final response" in str(wcm.warning)
+			assert "expected a valid response" in str(wcm.warning)
 
 	async def test_macros(self) -> None:
 		"""
