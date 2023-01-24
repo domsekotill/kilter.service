@@ -1,4 +1,4 @@
-# Copyright 2022 Dominik Sekotill <dom.sekotill@kodo.org.uk>
+# Copyright 2022-2023 Dominik Sekotill <dom.sekotill@kodo.org.uk>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,8 +40,7 @@ Messages sent from an MTA to a filter
 """
 
 ResponseMessage: TypeAlias = Union[
-	Continue, Reject, Discard, Accept, TemporaryFailure, Skip,
-	ReplyCode, Abort,
+	Continue, Reject, Discard, Accept, TemporaryFailure, ReplyCode,
 ]
 """
 Messages send from a filter to an MTA in response to `EventMessages`

@@ -215,7 +215,7 @@ class _TaskRunner:
 			for _, session in self.filters:
 				await session.deliver(message)
 
-	async def message_events(self, message: _VALID_EVENT_MESSAGE) -> ResponseMessage:
+	async def message_events(self, message: _VALID_EVENT_MESSAGE) -> ResponseMessage|Skip:
 		skip = isinstance(message, Body)
 		for channel in self.channels:
 			await channel.send(message)
