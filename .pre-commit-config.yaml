@@ -93,7 +93,8 @@ repos:
   rev: v0.991
   hooks:
   - id: mypy
-    args: [--follow-imports=silent]
+    args: [--follow-imports=silent, kilter/service]
+    pass_filenames: false
     additional_dependencies:
     - anyio
     - kilter.protocol ~=0.1.3
