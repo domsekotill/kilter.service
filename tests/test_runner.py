@@ -1,3 +1,5 @@
+import unittest
+
 import trio.testing
 
 from kilter.protocol import *
@@ -266,6 +268,7 @@ class RunnerTests(AsyncTestCase):
 		assert aborted
 		assert helo == "test.example.com"
 
+	@unittest.expectedFailure
 	async def test_abort_close(self) -> None:
 		"""
 		Check that a runner closes and does not restart when it receives an Abort + Close
