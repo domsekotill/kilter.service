@@ -15,6 +15,7 @@ from collections.abc import Callable
 from importlib import import_module
 from inspect import get_annotations
 from types import FunctionType
+from types import MethodType
 from types import ModuleType
 from typing import Literal as L
 from typing import Union
@@ -117,7 +118,7 @@ def get_context(what: ObjType, obj: object, name: str) -> tuple[ModuleType, type
 			assert isinstance(obj, ModuleType)
 			return obj, None
 		case "method":
-			assert isinstance(obj, FunctionType)
+			assert isinstance(obj, FunctionType|MethodType)
 			return get_method_context(obj)
 		case "property":
 			assert isinstance(obj, property)
@@ -136,14 +137,15 @@ def get_context(what: ObjType, obj: object, name: str) -> tuple[ModuleType, type
 		case "function":
 			assert hasattr(obj, "__module__"), f"{what} {obj!r} has no attribute '__module__'"
 			return import_module(obj.__module__), None
-		case "attribute":
+		case "attribute" | "data":
 			# Only thing to go on is the name, which *should* be fully qualified
 			_, parent, _ = dot_import(sys.modules["builtins"], None, name)
 			if isinstance(parent, type):
 				return sys.modules[parent.__module__], parent
 			if isinstance(parent, ModuleType):
 				return parent, None
-	raise UnknownObject(f"unknown value for 'what': {what}")
+	logging.getLogger(__name__).warning(f"unknown object type: :{what}:")
+	return get_context("attribute", obj, name)
 
 
 def get_method_context(method: FunctionType) -> tuple[ModuleType, type|None]:
