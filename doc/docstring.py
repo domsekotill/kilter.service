@@ -236,7 +236,7 @@ def mark_admonitions(
 	def replace(match: re.Match[str]) -> str:
 		return f".. {match.group(1)}::"
 	regex = re.compile(
-		r"(attention|caution|danger|error|hint|important|note|tip|warning):",
+		r"^\s*(attention|caution|danger|error|hint|important|note|tip|warning):",
 		re.I,
 	)
 	lines[:] = (regex.sub(replace, line) for line in lines)
