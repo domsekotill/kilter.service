@@ -298,9 +298,9 @@ class RunnerTests(AsyncTestCase):
 		Check that a runner closes cleanly when it receives an Abort
 		"""
 		@Runner
-		async def test_filter(session: Session) -> Reject:
+		async def test_filter(session: Session) -> Skip:
 			await session.helo()
-			return Reject()
+			return Skip()
 
 		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
 			tg.start_soon(test_filter, stream_mock.peer_stream)
