@@ -96,7 +96,7 @@ repos:
     args: [--follow-imports=silent, kilter/service]
     pass_filenames: false
     additional_dependencies:
-    - anyio
+    - anyio ~=3.1
     - kilter.protocol ~=0.2.1
     - sphinx
     - trio-typing
