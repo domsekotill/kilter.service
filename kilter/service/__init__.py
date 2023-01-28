@@ -8,12 +8,12 @@ project).  The framework aims to provide Pythonic interfaces for implementing fi
 including leveraging coroutines instead of libmilter's callback-style interface.
 """
 
+from ..protocol import ResponseMessage
 from .runner import Runner
 from .session import END
 from .session import START
 from .session import After
 from .session import Before
-from .session import ResponseMessage
 from .session import Session
 
 __version__ = "0.1.1"

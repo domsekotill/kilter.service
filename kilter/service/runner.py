@@ -27,7 +27,10 @@ from anyio.streams.stapled import StapledObjectStream
 from async_generator import aclosing
 
 from kilter.protocol.buffer import SimpleBuffer
+from kilter.protocol.core import EditMessage
+from kilter.protocol.core import EventMessage
 from kilter.protocol.core import FilterProtocol
+from kilter.protocol.core import ResponseMessage
 from kilter.protocol.messages import ProtocolFlags
 
 from .session import *
@@ -35,7 +38,7 @@ from .util import Broadcast
 from .util import qualname
 
 MessageChannel: TypeAlias = anyio.abc.ObjectStream[Message]
-Sender: TypeAlias = AsyncGenerator[None, Message]
+Sender: TypeAlias = AsyncGenerator[None, ResponseMessage|EditMessage|Negotiate|Skip]
 
 kiB: Final = 2**10
 MiB: Final = 2**20

@@ -22,37 +22,14 @@ from typing import TYPE_CHECKING
 from typing import AsyncContextManager
 from typing import Literal
 from typing import Protocol
-from typing import TypeAlias
 from typing import TypeVar
-from typing import Union
 from warnings import warn
 
+from ..protocol.core import EditMessage
+from ..protocol.core import EventMessage
+from ..protocol.core import ResponseMessage
 from ..protocol.messages import *
 from . import util
-
-EventMessage: TypeAlias = Union[
-	Connect, Helo, EnvelopeFrom, EnvelopeRecipient, Data, Unknown,
-	Header, EndOfHeaders, Body, EndOfMessage,
-	Macro, Abort,
-]
-"""
-Messages sent from an MTA to a filter
-"""
-
-ResponseMessage: TypeAlias = Union[
-	Continue, Reject, Discard, Accept, TemporaryFailure, ReplyCode,
-]
-"""
-Messages send from a filter to an MTA in response to `EventMessages`
-"""
-
-EditMessage: TypeAlias = Union[
-	AddHeader, ChangeHeader, InsertHeader, ChangeSender, AddRecipient, AddRecipientPar,
-	RemoveRecipient, ReplaceBody,
-]
-"""
-Messages send from a filter to an MTA after an `EndOfMessage` to modify a message
-"""
 
 
 class Aborted(BaseException):
