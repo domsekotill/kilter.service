@@ -7,7 +7,7 @@ repos:
   - id: check-useless-excludes
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.4.0
+  rev: v4.4.0
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -30,12 +30,12 @@ repos:
 
 # - repo: https://github.com/jorisroovers/gitlint
 - repo: https://github.com/hongqn/gitlint
-  rev: b389d280
+  rev: v0.15.1
   hooks:
   - id: gitlint
 
 - repo: https://code.kodo.org.uk/dom/pre-commit-hooks
-  rev: v0.6
+  rev: v0.6.1
   hooks:
   - id: check-executable-modes
   - id: check-for-squash
@@ -46,14 +46,14 @@ repos:
   - id: protect-first-parent
 
 - repo: https://github.com/pre-commit/pygrep-hooks
-  rev: v1.8.0
+  rev: v1.10.0
   hooks:
   - id: python-no-eval
   - id: python-no-log-warn
   - id: python-use-type-annotations
 
 - repo: https://github.com/hakancelikdev/unimport
-  rev: 0.10.0
+  rev: 1.0.0
   hooks:
   - id: unimport
     args: [--remove]
@@ -63,13 +63,13 @@ repos:
     stages: [commit, manual]
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.9.3
+  rev: 5.12.0
   hooks:
   - id: isort
     stages: [commit, manual]
 
 - repo: https://github.com/asottile/add-trailing-comma
-  rev: v2.1.0
+  rev: v3.0.0
   hooks:
   - id: add-trailing-comma
     args: [--py36-plus]
@@ -78,7 +78,7 @@ repos:
     stages: [commit, manual]
 
 - repo: https://github.com/flakeheaven/flakeheaven
-  rev: 1.0.1
+  rev: 3.3.0
   hooks:
   - id: flakeheaven
     additional_dependencies:
@@ -90,7 +90,7 @@ repos:
     - pydocstyle[toml]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.991
+  rev: v1.4.1
   hooks:
   - id: mypy
     args: [--follow-imports=silent, kilter/service]
