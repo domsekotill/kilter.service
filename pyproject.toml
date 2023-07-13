@@ -47,7 +47,6 @@ known_first_party = "kilter.protocol"
 
 
 [tool.unimport]
-include_star = true
 ignore_init = true
 
 
