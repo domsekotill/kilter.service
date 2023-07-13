@@ -44,6 +44,18 @@ on-the-wire protocol used is undocumented and subject to change between versions
 makes writing a third-party parser difficult.
 
 
+Alternatives in the Python Space
+--------------------------------
+
+- [purepythonmilter](https://github.com/gertvdijk/purepythonmilter):
+  A modern and robust implementation for `asyncio`, written purely in statically typed 
+  Python without the need for `libmilter`.
+
+- [python-libmilter](https://github.com/crustymonkey/python-libmilter):
+	Another pure-Python module using threading. Lacks static type annotations and is no longer 
+	actively developed, although still minimally maintained.
+
+
 Usage
 =====
 
