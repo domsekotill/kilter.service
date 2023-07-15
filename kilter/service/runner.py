@@ -68,7 +68,7 @@ class _Broadcast(Broadcast[EventMessage]):
 
 	def __init__(self) -> None:
 		super().__init__()
-		self.task_status: anyio.abc.TaskStatus|None = None
+		self.task_status: anyio.abc.TaskStatus[None]|None = None
 
 	async def shutdown_hook(self) -> None:
 		await self.pre_receive_hook()
@@ -274,12 +274,12 @@ class _TaskRunner:
 		channel: MessageChannel,
 		first_connect: bool,
 		use_skip: bool, *,
-		task_status: anyio.abc.TaskStatus,
+		task_status: anyio.abc.TaskStatus[ResponseMessage],
 	) -> None:
 		final_resp: ResponseMessage|None = None
 
 		async def _filter_wrap(
-			task_status: anyio.abc.TaskStatus,
+			task_status: anyio.abc.TaskStatus[None],
 		) -> None:
 			nonlocal final_resp
 			async with session:
