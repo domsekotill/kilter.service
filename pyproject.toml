@@ -29,7 +29,7 @@ classifiers = [
 
 [project.optional-dependencies]
 tests = [
-	"trio",
+	"trio <0.22",  # Until anyio supports BaseExceptionGroup
 ]
 docs = [
 	"sphinx ~=5.0",
