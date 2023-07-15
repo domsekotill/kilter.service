@@ -16,15 +16,14 @@ from __future__ import annotations
 
 import logging
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING
 from typing import Final
 from typing import TypeAlias
-from typing import TypeVar
 from warnings import warn
 
 import anyio.abc
 from anyio.streams.stapled import StapledObjectStream
 from async_generator import aclosing
+from typing_extensions import Self
 
 from kilter.protocol.buffer import SimpleBuffer
 from kilter.protocol.core import EditMessage
@@ -182,15 +181,12 @@ class Runner:
 
 class _TaskRunner:
 
-	if TYPE_CHECKING:
-		Self = TypeVar("Self", bound="_TaskRunner")
-
 	def __init__(self, tasks: anyio.abc.TaskGroup):
 		self.tasks = tasks
 		self.filters = list[tuple[Filter, Session]]()
 		self.channels = list[MessageChannel]()
 
-	async def __aenter__(self: Self) -> Self:
+	async def __aenter__(self) -> Self:
 		return self
 
 	async def __aexit__(self, *_: object) -> None:

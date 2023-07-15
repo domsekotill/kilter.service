@@ -18,12 +18,12 @@ from ipaddress import IPv4Address
 from ipaddress import IPv6Address
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING
 from typing import AsyncContextManager
 from typing import Literal
 from typing import Protocol
-from typing import TypeVar
 from warnings import warn
+
+from typing_extensions import Self
 
 from ..protocol.core import EditMessage
 from ..protocol.core import EventMessage
@@ -147,9 +147,6 @@ class Session:
 	The kernel of a filter, providing an API for filters to access messages from an MTA
 	"""
 
-	if TYPE_CHECKING:
-		Self = TypeVar("Self", bound="Session")
-
 	host: str
 	"""
 	A hostname from a reverse address lookup performed when a client connects
@@ -211,7 +208,7 @@ class Session:
 		# so some phases will be skipped; checks should not try to exactly match a phase.
 		self.phase = Phase.CONNECT
 
-	async def __aenter__(self: Self) -> Self:
+	async def __aenter__(self) -> Self:
 		await self.broadcast.__aenter__()
 		return self
 
@@ -452,13 +449,10 @@ class HeaderIterator(AsyncGenerator[Header, None]):
 	Iterator for headers obtained by using a `HeadersAccessor` as a context manager
 	"""
 
-	if TYPE_CHECKING:
-		Self = TypeVar("Self", bound="HeaderIterator")
-
 	def __init__(self, aiter: AsyncGenerator[Header, None]):
 		self._aiter = aiter
 
-	def __aiter__(self: Self) -> Self:
+	def __aiter__(self) -> Self:
 		return self
 
 	async def __anext__(self) -> Header:  # noqa: D102

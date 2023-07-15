@@ -7,15 +7,14 @@ from collections.abc import Callable
 from contextlib import asynccontextmanager
 from functools import wraps
 from types import TracebackType
-from typing import TYPE_CHECKING
 from typing import AsyncContextManager
-from typing import TypeVar
 
 import anyio
 from anyio.streams.buffered import BufferedByteReceiveStream
 from anyio.streams.stapled import StapledByteStream
 from anyio.streams.stapled import StapledObjectStream
 from async_generator import aclosing
+from typing_extensions import Self
 
 from kilter.protocol import *
 from kilter.protocol.buffer import SimpleBuffer
@@ -45,14 +44,11 @@ class MockMessageStream:
 	A mock of the right-side of an `anyio.abc.ByteStream` with test support on the left side
 	"""
 
-	if TYPE_CHECKING:
-		Self = TypeVar("Self", bound="MockMessageStream")
-
 	def __init__(self) -> None:
 		self.buffer = SimpleBuffer(1024)
 		self.closed = False
 
-	async def __aenter__(self: Self) -> Self:
+	async def __aenter__(self) -> Self:
 		send_obj, recv_bytes = anyio.create_memory_object_stream(5, bytes)
 		send_bytes, recv_obj = anyio.create_memory_object_stream(5, bytes)
 
