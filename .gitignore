@@ -6,3 +6,6 @@
 
 # Test results
 /results/
+
+# Dev tools caches
+.*_cache/
