@@ -35,7 +35,7 @@ def _syncwrap(test: AsyncTest, time_limit: float) -> SyncTest:
 	@functools.wraps(test)
 	def wrap(self: TestCase) -> None:
 		async def limiter() -> None:
-			with trio.fail_after(time_limit) as cancel_scope:
+			with trio.move_on_after(time_limit) as cancel_scope:
 				await test(self)
 			if cancel_scope.cancelled_caught:
 				raise TimeoutError
