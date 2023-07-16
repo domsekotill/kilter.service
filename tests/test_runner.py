@@ -240,14 +240,16 @@ class RunnerTests(AsyncTestCase):
 		Check that a runner closes cleanly when it receives an Abort
 		"""
 		aborted = False
-		helo = ""
+		helo = []
+		envelope = ""
 
 		@Runner
 		async def test_filter(session: Session) -> Accept:
 			nonlocal aborted
-			nonlocal helo
+			nonlocal envelope
+			helo.append(await session.helo())
 			try:
-				helo = await session.helo()
+				envelope = await session.envelope_from()
 			except Aborted:
 				aborted = True
 				raise
@@ -259,12 +261,15 @@ class RunnerTests(AsyncTestCase):
 
 			await stream_mock.send_and_expect(Negotiate(6, 0x1ff, 0), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
-			assert [] == await stream_mock.send_msg(Abort())
+			await stream_mock.send_and_expect(Helo("test.example.com"), Continue)
 
-			await stream_mock.send_and_expect(Helo("test.example.com"), Accept)
+			assert [] == await stream_mock.send_msg(Abort())
+			await stream_mock.send_and_expect(Helo("test.example.com"), Continue)
+			await stream_mock.send_and_expect(EnvelopeFrom(b"sender@example.com"), Accept)
 
 		assert aborted
-		assert helo == "test.example.com"
+		assert helo == ["test.example.com", "test.example.com"]
+		assert envelope == "sender@example.com"
 
 	async def test_abort_close(self) -> None:
 		"""
