@@ -308,12 +308,12 @@ class _TaskRunner:
 				# TODO: Upgrade and remove ignores once python/mypy#14242 is in
 				assert isinstance(message, _VALID_EVENT_MESSAGE)  # type: ignore[misc,arg-type]
 				resp = await session.deliver(message)  # type: ignore[arg-type]
-				if final_resp is not None:
-					break  # type: ignore[unreachable]
 				if isinstance(message, Abort):
 					await channel.send(Continue())
 					await channel.aclose()
 					return
+				if final_resp is not None:
+					break  # type: ignore[unreachable]
 				await channel.send(Skip() if use_skip and resp == Skip else Continue())
 			await channel.send(final_resp)
 
