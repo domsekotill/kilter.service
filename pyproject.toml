@@ -17,7 +17,7 @@ requires-python = ">=3.10,<4"
 dependencies = [
 	"anyio ~=3.0",
 	"async-generator ~=1.2",
-	"kilter.protocol ~=0.2.1",
+	"kilter.protocol ~=0.3.0",
 	"typing-extensions ~=4.0",
 ]
 classifiers = [

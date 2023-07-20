@@ -149,7 +149,7 @@ class Runner:
 							# Type narrowing should do the job adequately
 							# https://code.kodo.org.uk/kilter/kilter.protocol/-/issues/5
 							assert isinstance(message, _VALID_EVENT_MESSAGE)  # type: ignore[misc,arg-type]
-							await sender.asend(await runner.message_events(message))  # type: ignore[arg-type]
+							await sender.asend(await runner.message_events(message))
 
 	async def _negotiate(self, message: Negotiate, sender: Sender) -> Negotiate:
 		_logger.info("Negotiating with MTA")
@@ -159,9 +159,8 @@ class Runner:
 		if actions != ActionFlags.unpack(message.action_flags):
 			raise NegotiationError("MTA does not accept all actions required by the filter")
 
-		resp = Negotiate(6, 0, 0)
-		resp.protocol_flags = message.protocol_flags & ~_DISABLE_PROTOCOL_FLAGS
-		resp.action_flags = ActionFlags.pack(actions)
+		resp = Negotiate(6, message.action_flags, message.protocol_flags)
+		resp.protocol_flags &= ~_DISABLE_PROTOCOL_FLAGS
 
 		self.use_skip = bool(resp.protocol_flags & ProtocolFlags.SKIP)
 
