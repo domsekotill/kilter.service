@@ -97,7 +97,7 @@ class Runner:
 		Return an awaitable that starts and coordinates filters
 		"""
 		buff = SimpleBuffer(1*MiB)
-		proto = FilterProtocol()
+		proto = FilterProtocol(abort_on_unknown=True)
 		sender = _sender(client, proto)
 		macro: Macro|None = None
 		aborted = False
