@@ -155,8 +155,8 @@ class Runner:
 		_logger.info("Negotiating with MTA")
 
 		# TODO: actually negotiate what the filter wants, not just "everything"
-		actions = set(ActionFlags)  # All actions!
-		if actions != ActionFlags.unpack(message.action_flags):
+		actions = sum(ActionFlags)  # All actions!
+		if actions != message.action_flags:
 			raise NegotiationError("MTA does not accept all actions required by the filter")
 
 		resp = Negotiate(6, message.action_flags, message.protocol_flags)
