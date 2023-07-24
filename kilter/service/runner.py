@@ -124,7 +124,7 @@ class Runner:
 						_logger.debug(f"received: {message}")
 					match message:
 						case Negotiate():
-							await sender.asend(await self._negotiate(message, sender))
+							await sender.asend(await self._negotiate(message))
 						case Macro() as macro:
 							# Note that this Macro will hang around as "macro"; this is for
 							# Connect messages.
@@ -151,7 +151,7 @@ class Runner:
 							assert isinstance(message, _VALID_EVENT_MESSAGE)  # type: ignore[misc,arg-type]
 							await sender.asend(await runner.message_events(message))
 
-	async def _negotiate(self, message: Negotiate, sender: Sender) -> Negotiate:
+	async def _negotiate(self, message: Negotiate) -> Negotiate:
 		_logger.info("Negotiating with MTA")
 
 		# TODO: actually negotiate what the filter wants, not just "everything"
@@ -201,7 +201,7 @@ class _TaskRunner:
 		for flter, session in self.filters:
 			lchannel, rchannel = _make_message_channel()
 			self.channels.append(lchannel)
-			match await self.tasks.start(self._runner, flter, session, rchannel, first_connect, use_skip):
+			match await self.tasks.start(self._runner, flter, session, rchannel, use_skip):
 				case Accept():
 					self.channels.remove(lchannel)
 				case Continue():
@@ -267,7 +267,6 @@ class _TaskRunner:
 		fltr: Filter,
 		session: Session,
 		channel: MessageChannel,
-		first_connect: bool,
 		use_skip: bool, *,
 		task_status: anyio.abc.TaskStatus[ResponseMessage],
 	) -> None:
