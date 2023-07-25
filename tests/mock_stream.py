@@ -19,6 +19,7 @@ from typing_extensions import Self
 from kilter.protocol import *
 from kilter.protocol.buffer import SimpleBuffer
 from kilter.service import ResponseMessage
+from kilter.service import Runner
 
 P = typing.ParamSpec("P")
 SendT = typing.TypeVar("SendT")
@@ -74,6 +75,17 @@ class MockMessageStream:
 				await self.close()
 		await self._stream.__aexit__(et, ex, tb)
 		await self.peer_stream.__aexit__(et, ex, tb)
+
+	@classmethod
+	@asynccontextmanager
+	async def started(cls, runner: Runner) -> AsyncIterator[Self]:
+		"""
+		Return a context manager that yields a prepared stream mock connected to a runner
+		"""
+		async with anyio.create_task_group() as tg, cls() as stream_mock:
+			tg.start_soon(runner, stream_mock.peer_stream)
+			await anyio.wait_all_tasks_blocked()
+			yield stream_mock
 
 	async def abort(self) -> None:
 		"""
