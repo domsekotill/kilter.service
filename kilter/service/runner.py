@@ -144,11 +144,6 @@ class Runner:
 							if aborted:
 								aborted = False
 								await runner.start(False, self.use_skip)
-							# TODO: Upgrade and remove ignores once python/mypy#14242 is in
-							# TODO: Should remove assert once kilter.protocol#5 is resolved
-							# Type narrowing should do the job adequately
-							# https://code.kodo.org.uk/kilter/kilter.protocol/-/issues/5
-							assert isinstance(message, _VALID_EVENT_MESSAGE)  # type: ignore[misc,arg-type]
 							await sender.asend(await runner.message_events(message))
 
 	async def _negotiate(self, message: Negotiate) -> Negotiate:
