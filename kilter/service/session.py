@@ -43,7 +43,7 @@ class Filter(Protocol):
 	Filters are callables that accept a `Session` and return a response
 	"""
 
-	async def __call__(self, session: Session) -> ResponseMessage: ...  # noqa: D102
+	async def __call__(self, session: Session, /) -> ResponseMessage: ...  # noqa: D102
 
 
 class Phase(int, Enum):
