@@ -25,38 +25,38 @@ class SessionTests(AsyncTestCase):
 		Check that the phase progresses correctly when messages are delivered
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
-		assert session.phase == Phase.CONNECT
+		self.assertEqual(session.phase, Phase.CONNECT)
 
 		await session.deliver(Helo("example.com"))
-		assert session.phase == Phase.MAIL
+		self.assertEqual(session.phase, Phase.MAIL)
 
 		await session.deliver(EnvelopeFrom(b"test@example.com"))
-		assert session.phase == Phase.ENVELOPE
+		self.assertEqual(session.phase, Phase.ENVELOPE)
 
 		await session.deliver(Data())
-		assert session.phase == Phase.HEADERS
+		self.assertEqual(session.phase, Phase.HEADERS)
 
 		await session.deliver(Body(b""))
-		assert session.phase == Phase.BODY
+		self.assertEqual(session.phase, Phase.BODY)
 
 		await session.deliver(EndOfMessage(b""))
-		assert session.phase == Phase.POST
+		self.assertEqual(session.phase, Phase.POST)
 
 	async def test_deliver_phases_2(self) -> None:
 		"""
 		Check that the phase progresses correctly when messages are delivered
 		"""
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
-		assert session.phase == Phase.CONNECT
+		self.assertEqual(session.phase, Phase.CONNECT)
 
 		await session.deliver(EnvelopeRecipient(b"test@example.com", []))
-		assert session.phase == Phase.ENVELOPE
+		self.assertEqual(session.phase, Phase.ENVELOPE)
 
 		await session.deliver(Header("To", b"test@example.com"))
-		assert session.phase == Phase.HEADERS
+		self.assertEqual(session.phase, Phase.HEADERS)
 
 		await session.deliver(EndOfHeaders())
-		assert session.phase == Phase.BODY
+		self.assertEqual(session.phase, Phase.BODY)
 
 	async def test_receive_ignore(self) -> None:
 		"""
@@ -307,9 +307,9 @@ class SessionTests(AsyncTestCase):
 
 		@with_session(session)
 		async def test_filter() -> None:
-			assert session.phase == Phase.CONNECT
+			self.assertEqual(session.phase, Phase.CONNECT)
 			await session.change_sender("test@example.com")
-			assert session.phase == Phase.POST
+			self.assertEqual(session.phase, Phase.POST)
 			await session.change_sender("test@example.com", "SPAM")
 
 		async with trio.open_nursery() as tg:
@@ -331,9 +331,9 @@ class SessionTests(AsyncTestCase):
 
 		@with_session(session)
 		async def test_filter() -> None:
-			assert session.phase == Phase.CONNECT
+			self.assertEqual(session.phase, Phase.CONNECT)
 			await session.add_recipient("test@example.com")
-			assert session.phase == Phase.POST
+			self.assertEqual(session.phase, Phase.POST)
 			await session.add_recipient("test@example.com", "SPAM")
 
 		async with trio.open_nursery() as tg:
@@ -355,9 +355,9 @@ class SessionTests(AsyncTestCase):
 
 		@with_session(session)
 		async def test_filter() -> None:
-			assert session.phase == Phase.CONNECT
+			self.assertEqual(session.phase, Phase.CONNECT)
 			await session.remove_recipient("test@example.com")
-			assert session.phase == Phase.POST
+			self.assertEqual(session.phase, Phase.POST)
 
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
@@ -421,12 +421,12 @@ class SessionTests(AsyncTestCase):
 
 		@with_session(session)
 		async def test_filter() -> None:
-			assert session.phase == Phase.CONNECT
+			self.assertEqual(session.phase, Phase.CONNECT)
 			assert await session.helo() == "test.example.org"
-			assert session.phase == Phase.MAIL
+			self.assertEqual(session.phase, Phase.MAIL)
 			with self.assertRaises(Aborted):
 				await session.extension("MAIL")
-			assert session.phase == Phase.CONNECT
+			self.assertEqual(session.phase, Phase.CONNECT)
 			assert await session.helo() == "test.example.com"
 
 		async with trio.open_nursery() as tg:
