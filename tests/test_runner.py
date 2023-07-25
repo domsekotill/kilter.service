@@ -1,4 +1,4 @@
-import trio.testing
+import trio
 
 from kilter.protocol import *
 from kilter.service import Runner
@@ -35,10 +35,7 @@ class RunnerTests(AsyncTestCase):
 			hostname = await session.helo()
 			return Accept()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(
 				Negotiate(6, ActionFlags(0x1ff), ProtocolFlags(0xff3ff)),
 				Negotiate(6, ActionFlags(0x1ff), ProtocolFlags.NONE),
@@ -58,10 +55,7 @@ class RunnerTests(AsyncTestCase):
 		async def test_filter(session: Session) -> Reject:
 			return Reject()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(make_negotiate(), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Reject)
 
@@ -74,10 +68,7 @@ class RunnerTests(AsyncTestCase):
 			assert "test@example.com" == await session.envelope_from()
 			return Accept()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(make_negotiate(), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 			await stream_mock.send_and_expect(Helo("test.example.com"), Continue)
@@ -98,10 +89,7 @@ class RunnerTests(AsyncTestCase):
 					contents += chunk
 			return Accept()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(make_negotiate(), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 			await stream_mock.send_and_expect(Body(b"This is a "), Continue)
@@ -131,10 +119,7 @@ class RunnerTests(AsyncTestCase):
 
 			return Accept()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(
 				make_negotiate(options=0xff3ff | ProtocolFlags.SKIP),
 				Negotiate(6, ActionFlags(0x1ff), ProtocolFlags.SKIP),
@@ -172,10 +157,7 @@ class RunnerTests(AsyncTestCase):
 
 			return Accept()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(make_negotiate(), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 			await stream_mock.send_and_expect(Body(b"This is a "), Continue)
@@ -223,10 +205,7 @@ class RunnerTests(AsyncTestCase):
 
 		runner = Runner(test_filter1, test_filter2)
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(runner, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(runner) as stream_mock:
 			await stream_mock.send_and_expect(
 				make_negotiate(options=0xff3ff | ProtocolFlags.SKIP),
 				Negotiate(6, ActionFlags(0x1ff), ProtocolFlags.SKIP),
@@ -264,10 +243,7 @@ class RunnerTests(AsyncTestCase):
 				raise
 			return Accept()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(make_negotiate(), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 			await stream_mock.send_and_expect(Helo("test.example.com"), Continue)
@@ -293,10 +269,7 @@ class RunnerTests(AsyncTestCase):
 			await session.helo()
 			return Accept()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(make_negotiate(), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 			assert [] == await stream_mock.send_msg(Abort())
@@ -313,10 +286,7 @@ class RunnerTests(AsyncTestCase):
 			await session.helo()
 			return Skip()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(make_negotiate(), Negotiate)
 			await stream_mock.send_and_expect(Connect("test.example.com"), Continue)
 
@@ -336,10 +306,7 @@ class RunnerTests(AsyncTestCase):
 			self.assertDictEqual(session.macros, {"{spam}": "no", "{ham}": "maybe", "{eggs}": "yes"})
 			return Accept()
 
-		async with trio.open_nursery() as tg, MockMessageStream() as stream_mock:
-			tg.start_soon(test_filter, stream_mock.peer_stream)
-			await trio.testing.wait_all_tasks_blocked()
-
+		async with MockMessageStream.started(test_filter) as stream_mock:
 			await stream_mock.send_and_expect(make_negotiate(), Negotiate)
 			await stream_mock.send_and_expect(
 				Macro(Connect.ident, {"{spam}": "yes", "{eggs}": "yes"}),
