@@ -3,6 +3,7 @@
 
 # Packages
 *.whl
+*.tar.gz
 
 # Test results
 /results/
