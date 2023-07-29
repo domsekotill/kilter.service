@@ -32,6 +32,7 @@ from kilter.protocol.core import FilterProtocol
 from kilter.protocol.core import ResponseMessage
 from kilter.protocol.messages import ProtocolFlags
 
+from .options import get_flags
 from .session import *
 from .util import Broadcast
 from .util import qualname
@@ -46,13 +47,6 @@ MiB: Final = 2**20
 _VALID_FINAL_RESPONSES: Final = Reject, Discard, Accept, TemporaryFailure, ReplyCode
 _VALID_EVENT_MESSAGE: TypeAlias = Helo | EnvelopeFrom | EnvelopeRecipient | Data | \
 	Unknown | Header | EndOfHeaders | Body | EndOfMessage | Abort
-_DISABLE_PROTOCOL_FLAGS: Final = ProtocolFlags.NO_CONNECT | ProtocolFlags.NO_HELO | \
-	ProtocolFlags.NO_SENDER | ProtocolFlags.NO_RECIPIENT | ProtocolFlags.NO_BODY | \
-	ProtocolFlags.NO_HEADERS | ProtocolFlags.NO_EOH | ProtocolFlags.NO_UNKNOWN | \
-	ProtocolFlags.NO_DATA | ProtocolFlags.NR_CONNECT | ProtocolFlags.NR_HELO | \
-	ProtocolFlags.NR_SENDER | ProtocolFlags.NR_RECIPIENT | ProtocolFlags.NR_DATA | \
-	ProtocolFlags.NR_UNKNOWN | ProtocolFlags.NR_EOH | ProtocolFlags.NR_BODY | \
-	ProtocolFlags.NR_HEADER
 
 _logger = logging.getLogger(__package__)
 
@@ -149,17 +143,33 @@ class Runner:
 	async def _negotiate(self, message: Negotiate) -> Negotiate:
 		_logger.info("Negotiating with MTA")
 
-		# TODO: actually negotiate what the filter wants, not just "everything"
-		actions = sum(ActionFlags)  # All actions!
-		if actions != message.action_flags:
-			raise NegotiationError("MTA does not accept all actions required by the filter")
+		optmask = ProtocolFlags.NONE
+		options = \
+			ProtocolFlags.SKIP | ProtocolFlags.NR_HELO | \
+			ProtocolFlags.NR_SENDER | ProtocolFlags.NR_RECIPIENT | \
+			ProtocolFlags.NR_DATA | ProtocolFlags.NR_BODY | \
+			ProtocolFlags.NR_HEADER | ProtocolFlags.NR_END_OF_HEADERS
+		actions = ActionFlags.NONE
 
-		resp = Negotiate(6, message.action_flags, message.protocol_flags)
-		resp.protocol_flags &= ~_DISABLE_PROTOCOL_FLAGS
+		options &= message.protocol_flags  # Remove unoffered initial flags, they are not required
 
-		self.use_skip = bool(resp.protocol_flags & ProtocolFlags.SKIP)
+		for filtr in self.filters:
+			flags = get_flags(filtr)
+			optmask |= flags.unset_options
+			options |= flags.set_options
+			actions |= flags.set_actions
 
-		return resp
+		options &= ~optmask
+
+		if (missing_actions := actions & ~message.action_flags):
+			raise NegotiationError(f"MTA does not accept {missing_actions}")
+
+		if (missing_options := options & ~message.protocol_flags):
+			raise NegotiationError(f"MTA does not offer {missing_options}")
+
+		self.use_skip = ProtocolFlags.SKIP in options
+
+		return Negotiate(6, actions, options)
 
 	async def _prepare_filters(
 		self,
