@@ -70,7 +70,7 @@ def get_flags(filtr: Filter) -> FlagsTuple:
 	"""
 	Return the flags attached to a filter
 	"""
-	default = FlagsTuple(unset_options=NR_FLAGS, set_actions=ActionFlags(0x1ff))
+	default = FlagsTuple(unset_options=NR_FLAGS, set_actions=ActionFlags.ALL)
 	return _get_flags(filtr, default)
 
 

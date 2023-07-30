@@ -77,7 +77,7 @@ class Tests(TestCase):
 			flags = options.get_flags(undecorated)
 
 			assert (flags.set_options & ~flags.unset_options) == ProtocolFlags.NONE
-			assert flags.set_actions == ActionFlags(0x1ff)
+			assert flags.set_actions == ActionFlags.ALL
 
 	def test_modify_flags(self) -> None:
 		"""
