@@ -70,6 +70,7 @@ flake8-docstrings = ["-*"]
 
 
 [tool.mypy]
+python_version = 3.10
 strict = true
 warn_unused_configs = true
 warn_unreachable = true
