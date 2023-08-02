@@ -31,7 +31,12 @@ SIZES = Literal[ProtocolFlags.NONE, ProtocolFlags.MDS_256K, ProtocolFlags.MDS_1M
 
 FLAGS_ATTRIBUTE = "filter_flags"
 
-NR_FLAGS = \
+DEFAULT_UNSET = \
+	ProtocolFlags.NO_CONNECT | ProtocolFlags.NO_HELO | \
+	ProtocolFlags.NO_SENDER | ProtocolFlags.NO_RECIPIENT | \
+	ProtocolFlags.NO_DATA | ProtocolFlags.NO_BODY | \
+	ProtocolFlags.NO_HEADERS | ProtocolFlags.NO_END_OF_HEADERS | \
+	ProtocolFlags.NO_UNKNOWN | \
 	ProtocolFlags.NR_CONNECT | ProtocolFlags.NR_HELO | \
 	ProtocolFlags.NR_SENDER | ProtocolFlags.NR_RECIPIENT | \
 	ProtocolFlags.NR_DATA | ProtocolFlags.NR_BODY | \
@@ -70,7 +75,7 @@ def get_flags(filtr: Filter) -> FlagsTuple:
 	"""
 	Return the flags attached to a filter
 	"""
-	default = FlagsTuple(unset_options=NR_FLAGS, set_actions=ActionFlags.ALL)
+	default = FlagsTuple(unset_options=DEFAULT_UNSET, set_actions=ActionFlags.ALL)
 	return _get_flags(filtr, default)
 
 
