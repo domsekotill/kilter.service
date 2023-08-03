@@ -104,10 +104,13 @@ class MockMessageStream:
 		"""
 		if self.closed:
 			return
-		resp = await self.send_msg(Close())
+		self.closed = True
+		try:
+			resp = await self.send_msg(Close())
+		except anyio.BrokenResourceError:
+			return
 		assert len(resp) == 0, resp
 		await self._stream.aclose()
-		self.closed = True
 
 	async def send_msg(self, msg: Message) -> list[Message]:
 		"""
