@@ -3,6 +3,10 @@ import trio
 from kilter.protocol import *
 from kilter.service import Runner
 from kilter.service import Session
+from kilter.service.options import examine_headers
+from kilter.service.options import examine_helo
+from kilter.service.options import responds_to_connect
+from kilter.service.runner import NegotiationError
 from kilter.service.session import Aborted
 
 from . import AsyncTestCase
@@ -317,3 +321,100 @@ class RunnerTests(AsyncTestCase):
 			)
 			await stream_mock.send_and_expect(Helo("test.example.com"), Accept)
 			await stream_mock.close()
+
+
+class RunnerNegotiateTests(AsyncTestCase):
+	"""
+	Tests for option negotiation
+	"""
+
+	async def test_default(self) -> None:
+		"""
+		Check that filters without option decoration negotiate for all stages and responses
+		"""
+		@Runner
+		async def test_filter(session: Session) -> Accept:
+			return Accept()
+
+		with self.subTest("no options"):
+			async with MockMessageStream.started(test_filter) as stream_mock:
+				await stream_mock.send_and_expect(
+					make_negotiate(),
+					make_negotiate(),
+				)
+
+		with self.subTest("options"):
+			offered = (
+				ProtocolFlags.NO_CONNECT | ProtocolFlags.NR_CONNECT |
+				ProtocolFlags.NO_HELO | ProtocolFlags.NR_HELO |
+				ProtocolFlags.SKIP
+			)
+
+			async with MockMessageStream.started(test_filter) as stream_mock:
+				await stream_mock.send_and_expect(
+					make_negotiate(options=offered),
+					make_negotiate(options=ProtocolFlags.SKIP),
+				)
+
+	async def test_options_decorated(self) -> None:
+		"""
+		Check that decorated filters negotiate for the minimum required stages and responses
+		"""
+		@Runner
+		@responds_to_connect()
+		async def test_filter(session: Session) -> Accept:
+			return Accept()
+
+		async with MockMessageStream.started(test_filter) as stream_mock:
+			offered = (
+				ProtocolFlags.NO_CONNECT | ProtocolFlags.NR_CONNECT |
+				ProtocolFlags.NO_HELO | ProtocolFlags.SKIP
+			)
+
+			await stream_mock.send_and_expect(
+				make_negotiate(options=offered),
+				make_negotiate(actions=0, options=ProtocolFlags.NO_HELO|ProtocolFlags.SKIP),
+			)
+
+	async def test_options_nr(self) -> None:
+		"""
+		Check that decorated filters unset NR_* options when not responding
+		"""
+		@Runner
+		@examine_helo(can_respond=True)
+		async def test_filter(session: Session) -> Accept:
+			await session.helo()
+			return Accept()
+
+		async with MockMessageStream.started(test_filter) as stream_mock:
+			offered = (
+				ProtocolFlags.NO_CONNECT | ProtocolFlags.NR_CONNECT |
+				ProtocolFlags.NO_HELO | ProtocolFlags.NR_HELO
+			)
+
+			await stream_mock.send_and_expect(
+				make_negotiate(options=offered),
+				make_negotiate(actions=0, options=ProtocolFlags.NR_CONNECT),
+			)
+
+	async def test_missing_needed(self) -> None:
+		"""
+		Check that when requiring options not offered by an MTA, NegotiateError is raised
+		"""
+		@Runner
+		@responds_to_connect()
+		@examine_headers(can_add=True, leading_space=True)
+		async def test_filter(session: Session) -> Accept:
+			return Accept()
+
+		with self.subTest("missing actions"), self.assertRaises(NegotiationError):
+			async with MockMessageStream.started(test_filter) as stream_mock:
+				await stream_mock.send_msg(
+					make_negotiate(actions=0, options=ProtocolFlags.HEADER_LEADING_SPACE),
+				)
+
+		with self.subTest("missing options"), self.assertRaises(NegotiationError):
+			async with MockMessageStream.started(test_filter) as stream_mock:
+				await stream_mock.send_msg(
+					make_negotiate(options=0),
+				)
