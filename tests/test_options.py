@@ -3,6 +3,7 @@ from unittest import TestCase
 from kilter.protocol import Accept
 from kilter.protocol import ActionFlags
 from kilter.protocol import ProtocolFlags
+from kilter.protocol import Stage
 from kilter.service import Session
 from kilter.service import options
 
@@ -328,3 +329,49 @@ class Tests(TestCase):
 			assert MAX_DATA_SIZE_1M in resolve_opts(flags, MAX_DATA_SIZE_1M)
 
 			assert CHANGE_BODY in flags.set_actions
+
+
+class MacroTests(TestCase):
+	"""
+	Tests for macro requests decorator
+	"""
+
+	def test_undecorated(self) -> None:
+		"""
+		Check that `get_macros` returns a default mapping for undecorated filters
+		"""
+		@options.responds_to_connect()
+		async def filter_flag_decorator(session: Session) -> Accept:
+			return Accept()
+
+		async def filter_no_decorator(session: Session) -> Accept:
+			return Accept()
+
+		for filtr in (filter_flag_decorator, filter_no_decorator):
+			with self.subTest(filter=filtr):
+
+				macros = options.get_macros(filtr)
+
+				assert isinstance(macros, dict)
+				assert len(macros) == 0
+
+	def test_decorated(self) -> None:
+		"""
+		Check that `get_macros` returns a good mapping for decorated filters
+		"""
+		@options.request_macros(Stage.CONNECT, "spam", "ham")
+		@options.request_macros(Stage.CONNECT, "eggs")
+		@options.request_macros(Stage.HELO, "spam", "ham")
+		@options.request_macros(Stage.HELO, "spam", "eggs")
+		async def filtr(session: Session) -> Accept:
+			return Accept()
+
+		macros = options.get_macros(filtr)
+
+		self.assertDictEqual(
+			macros,
+			{
+				Stage.CONNECT: {"spam", "ham", "eggs"},
+				Stage.HELO: {"spam", "ham", "eggs"},
+			},
+		)

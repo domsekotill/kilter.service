@@ -10,12 +10,14 @@ Filter decorators for marking the requested protocol options and actions used
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Callable
 from typing import Literal
 from typing import NamedTuple
 
 from kilter.protocol.messages import ActionFlags
 from kilter.protocol.messages import ProtocolFlags
+from kilter.protocol.messages import Stage
 
 from .session import Filter
 
@@ -24,12 +26,14 @@ __all__ = [
 	"examine_sender", "examine_recipients",
 	"examine_headers", "examine_body",
 	"get_flags", "modify_flags",
+	"get_macros", "request_macros",
 ]
 
 Decorator = Callable[[Filter], Filter]
 SIZES = Literal[ProtocolFlags.NONE, ProtocolFlags.MDS_256K, ProtocolFlags.MDS_1M]
 
 FLAGS_ATTRIBUTE = "filter_flags"
+MACRO_ATTRIBUTE = "filter_macros"
 
 DEFAULT_UNSET = \
 	ProtocolFlags.NO_CONNECT | ProtocolFlags.NO_HELO | \
@@ -60,13 +64,7 @@ def modify_flags(
 	Return a decorator that modifies the given flags on a decorated filter
 	"""
 	def decorator(filtr: Filter) -> Filter:
-		flags = _get_flags(filtr, FlagsTuple())
-		flags = FlagsTuple(
-			flags.unset_options|unset_options,
-			flags.set_options|set_options,
-			flags.set_actions|set_actions,
-		)
-		setattr(filtr, FLAGS_ATTRIBUTE, flags)
+		_set_flags(filtr, set_options, unset_options, set_actions)
 		return filtr
 	return decorator
 
@@ -79,9 +77,48 @@ def get_flags(filtr: Filter) -> FlagsTuple:
 	return _get_flags(filtr, default)
 
 
+def _set_flags(
+	filtr: Filter,
+	set_options: ProtocolFlags = ProtocolFlags.NONE,
+	unset_options: ProtocolFlags = ProtocolFlags.NONE,
+	set_actions: ActionFlags = ActionFlags.NONE,
+) -> None:
+	flags = _get_flags(filtr, FlagsTuple())
+	flags = FlagsTuple(
+		flags.unset_options|unset_options,
+		flags.set_options|set_options,
+		flags.set_actions|set_actions,
+	)
+	setattr(filtr, FLAGS_ATTRIBUTE, flags)
+
+
 def _get_flags(filtr: Filter, default: FlagsTuple) -> FlagsTuple:
 	assert isinstance(getattr(filtr, FLAGS_ATTRIBUTE, default), FlagsTuple)
 	return getattr(filtr, FLAGS_ATTRIBUTE, default)
+
+
+def request_macros(stage: Stage, *names: str) -> Decorator:
+	"""
+	Return a decorator that adds the given macro requests to a decorated filter
+	"""
+	def decorator(filtr: Filter) -> Filter:
+		_set_flags(filtr, set_actions=ActionFlags.SETSYMLIST)
+		macros = get_macros(filtr)
+		macros[stage].update(names)
+		return filtr
+	return decorator
+
+
+def get_macros(filtr: Filter) -> defaultdict[Stage, set[str]]:
+	"""
+	Return the requested macros attached to a filter
+	"""
+	try:
+		macros = getattr(filtr, MACRO_ATTRIBUTE)
+	except AttributeError:
+		setattr(filtr, MACRO_ATTRIBUTE, (macros := defaultdict(set)))
+	assert isinstance(macros, defaultdict)
+	return macros
 
 
 def responds_to_connect() -> Decorator:
