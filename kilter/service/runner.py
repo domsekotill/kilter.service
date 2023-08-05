@@ -15,6 +15,7 @@ The primary class in this module (`Runner`) is intended to be used with an
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from collections.abc import AsyncGenerator
 from typing import Final
 from typing import TypeAlias
@@ -33,6 +34,7 @@ from kilter.protocol.core import ResponseMessage
 from kilter.protocol.messages import ProtocolFlags
 
 from .options import get_flags
+from .options import get_macros
 from .session import *
 from .util import Broadcast
 from .util import qualname
@@ -181,6 +183,7 @@ class Runner:
 			ProtocolFlags.NR_DATA | ProtocolFlags.NR_BODY | \
 			ProtocolFlags.NR_HEADER | ProtocolFlags.NR_END_OF_HEADERS
 		actions = ActionFlags.NONE
+		macros = defaultdict(set)
 
 		options &= message.protocol_flags  # Remove unoffered initial flags, they are not required
 
@@ -189,6 +192,9 @@ class Runner:
 			optmask |= flags.unset_options
 			options |= flags.set_options
 			actions |= flags.set_actions
+
+			for stage, names in get_macros(filtr).items():
+				macros[stage].update(names)
 
 		options &= ~optmask
 
@@ -200,7 +206,7 @@ class Runner:
 
 		self.use_skip = ProtocolFlags.SKIP in options
 
-		return Negotiate(6, actions, options)
+		return Negotiate(6, actions, options, dict(macros))
 
 	async def _prepare_filters(
 		self,
