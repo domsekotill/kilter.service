@@ -6,6 +6,9 @@ from kilter.protocol import ProtocolFlags
 from kilter.protocol import Stage
 from kilter.service import Session
 from kilter.service import options
+from kilter.service.options import AFTER
+from kilter.service.options import BEFORE
+from kilter.service.options import DURING
 
 NO_CONNECT = ProtocolFlags.NO_CONNECT
 NO_HELO = ProtocolFlags.NO_HELO
@@ -253,6 +256,9 @@ class Tests(TestCase):
 			assert HEADER_LEADING_SPACE not in resolve_opts(flags, ProtocolFlags.NONE)
 			assert HEADER_LEADING_SPACE in resolve_opts(flags, HEADER_LEADING_SPACE)
 
+			assert NO_DATA in resolve_opts(flags, NO_DATA)
+			assert NO_END_OF_HEADERS in resolve_opts(flags, NO_END_OF_HEADERS)
+
 			assert ADD_HEADERS not in flags.set_actions
 			assert CHANGE_HEADERS not in flags.set_actions
 
@@ -292,6 +298,178 @@ class Tests(TestCase):
 			assert ADD_HEADERS in flags.set_actions
 			assert CHANGE_HEADERS in flags.set_actions
 
+	def test_examine_headers_respond(self) -> None:
+		"""
+		Check that flags for skipping stages and responses are set according to 'can_respond'
+		"""
+		with self.subTest("False"):
+			@options.examine_headers(can_respond=False)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_DATA not in resolved
+			assert NR_DATA not in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER not in resolved
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+
+			# Flags must be left set if already set
+			resolved = resolve_opts(
+				flags,
+				NO_DATA|NR_DATA|NO_HEADERS|NR_HEADER|NO_END_OF_HEADERS|NR_END_OF_HEADERS,
+			)
+			assert NO_DATA in resolved
+			assert NR_DATA in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER in resolved
+			assert NO_END_OF_HEADERS in resolved
+			assert NR_END_OF_HEADERS in resolved
+
+		with self.subTest("True"):
+			@options.examine_headers(can_respond=True)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_DATA not in resolved
+			assert NR_DATA not in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER not in resolved
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+
+			# Flags must be unset if already set
+			resolved = resolve_opts(
+				flags,
+				NO_DATA|NR_DATA|NO_HEADERS|NR_HEADER|NO_END_OF_HEADERS|NR_END_OF_HEADERS,
+			)
+			assert NO_DATA not in resolved
+			assert NR_DATA not in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER not in resolved
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+
+		with self.subTest("BEFORE"):
+			@options.examine_headers(can_respond=BEFORE)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_DATA not in resolved
+			assert NR_DATA not in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER not in resolved
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+
+			# NO_DATA and NR_DATA flags must be unset if already set
+			resolved = resolve_opts(
+				flags,
+				NO_DATA|NR_DATA|NO_HEADERS|NR_HEADER|NO_END_OF_HEADERS|NR_END_OF_HEADERS,
+			)
+			assert NO_DATA not in resolved
+			assert NR_DATA not in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER in resolved
+			assert NO_END_OF_HEADERS in resolved
+			assert NR_END_OF_HEADERS in resolved
+
+		with self.subTest("DURING"):
+			@options.examine_headers(can_respond=DURING)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_DATA not in resolved
+			assert NR_DATA not in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER not in resolved
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+
+			# NR_HEADER flag must be unset if already set
+			resolved = resolve_opts(
+				flags,
+				NO_DATA|NR_DATA|NO_HEADERS|NR_HEADER|NO_END_OF_HEADERS|NR_END_OF_HEADERS,
+			)
+			assert NO_DATA in resolved
+			assert NR_DATA in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER not in resolved
+			assert NO_END_OF_HEADERS in resolved
+			assert NR_END_OF_HEADERS in resolved
+
+		with self.subTest("AFTER"):
+			@options.examine_headers(can_respond=AFTER)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_DATA not in resolved
+			assert NR_DATA not in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER not in resolved
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+
+			# NO_EOH and NR_EOH flags must be unset if already set
+			resolved = resolve_opts(
+				flags,
+				NO_DATA|NR_DATA|NO_HEADERS|NR_HEADER|NO_END_OF_HEADERS|NR_END_OF_HEADERS,
+			)
+			assert NO_DATA in resolved
+			assert NR_DATA in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER in resolved
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+
+		with self.subTest("BEFORE|AFTER"):
+			@options.examine_headers(can_respond=BEFORE|AFTER)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_DATA not in resolved
+			assert NR_DATA not in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER not in resolved
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+
+			# NO_DATA, NR_DATA, NO_EOH and NR_EOH flags must be unset if already set
+			resolved = resolve_opts(
+				flags,
+				NO_DATA|NR_DATA|NO_HEADERS|NR_HEADER|NO_END_OF_HEADERS|NR_END_OF_HEADERS,
+			)
+			assert NO_DATA not in resolved
+			assert NR_DATA not in resolved
+			assert NO_HEADERS not in resolved
+			assert NR_HEADER in resolved
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+
 	def test_examine_body(self) -> None:
 		"""
 		Check that examine_body sets protocol options and actions as appropriate
@@ -329,6 +507,106 @@ class Tests(TestCase):
 			assert MAX_DATA_SIZE_1M in resolve_opts(flags, MAX_DATA_SIZE_1M)
 
 			assert CHANGE_BODY in flags.set_actions
+
+	def test_examine_body_respond(self) -> None:
+		"""
+		Check that flags for skipping stages and responses are set according to 'can_respond'
+		"""
+		with self.subTest("False"):
+			@options.examine_body(can_respond=False)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+			assert NO_BODY not in resolved
+			assert NR_BODY not in resolved
+
+			# Flags must be left set if already set
+			resolved = resolve_opts(
+				flags,
+				NO_END_OF_HEADERS|NR_END_OF_HEADERS|NO_BODY|NR_BODY,
+			)
+			assert NO_END_OF_HEADERS in resolved
+			assert NR_END_OF_HEADERS in resolved
+			assert NO_BODY not in resolved
+			assert NR_BODY in resolved
+
+		with self.subTest("True"):
+			@options.examine_body(can_respond=True)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+			assert NO_BODY not in resolved
+			assert NR_BODY not in resolved
+
+			# Flags must be unset if already set
+			resolved = resolve_opts(
+				flags,
+				NO_END_OF_HEADERS|NR_END_OF_HEADERS|NO_BODY|NR_BODY,
+			)
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+			assert NO_BODY not in resolved
+			assert NR_BODY not in resolved
+
+		with self.subTest("BEFORE"):
+			@options.examine_body(can_respond=BEFORE)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+			assert NO_BODY not in resolved
+			assert NR_BODY not in resolved
+
+			# NO_EOH and NR_EOH flags must be unset if already set
+			resolved = resolve_opts(
+				flags,
+				NO_END_OF_HEADERS|NR_END_OF_HEADERS|NO_BODY|NR_BODY,
+			)
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+			assert NO_BODY not in resolved
+			assert NR_BODY in resolved
+
+		with self.subTest("DURING"):
+			@options.examine_body(can_respond=DURING)
+			async def filtr(session: Session) -> Accept:
+				return Accept()
+
+			flags = options.get_flags(filtr)
+
+			# Flags must not be set if not already set
+			resolved = resolve_opts(flags)
+			assert NO_END_OF_HEADERS not in resolved
+			assert NR_END_OF_HEADERS not in resolved
+			assert NO_BODY not in resolved
+			assert NR_BODY not in resolved
+
+			# NR_BODY flag must be unset if already set
+			resolved = resolve_opts(
+				flags,
+				NO_END_OF_HEADERS|NR_END_OF_HEADERS|NO_BODY|NR_BODY,
+			)
+			assert NO_END_OF_HEADERS in resolved
+			assert NR_END_OF_HEADERS in resolved
+			assert NO_BODY not in resolved
+			assert NR_BODY not in resolved
 
 
 class MacroTests(TestCase):

@@ -11,6 +11,8 @@ Filter decorators for marking the requested protocol options and actions used
 from __future__ import annotations
 
 from collections import defaultdict
+from enum import Flag
+from enum import auto
 from typing import Callable
 from typing import Literal
 from typing import NamedTuple
@@ -22,6 +24,7 @@ from kilter.protocol.messages import Stage
 from .session import Filter
 
 __all__ = [
+	"CanRespond", "NEVER", "BEFORE", "DURING", "AFTER",
 	"responds_to_connect", "examine_helo",
 	"examine_sender", "examine_recipients",
 	"examine_headers", "examine_body",
@@ -46,6 +49,28 @@ DEFAULT_UNSET = \
 	ProtocolFlags.NR_DATA | ProtocolFlags.NR_BODY | \
 	ProtocolFlags.NR_HEADER | ProtocolFlags.NR_END_OF_HEADERS | \
 	ProtocolFlags.NR_UNKNOWN
+
+
+class CanRespond(Flag):
+	"""
+	Flags for fine indication of which stages during message sending a filter may respond at
+
+	Used with `examine_headers()` and `examine_body()` to further refine which stages during
+	message header and body transfer will synchronously block until a response of some kind
+	is received.
+	"""
+
+	NEVER = 0
+	BEFORE = auto()
+	DURING = auto()
+	AFTER = auto()
+	ALL = BEFORE|DURING|AFTER
+
+
+NEVER = CanRespond.NEVER
+BEFORE = CanRespond.BEFORE
+DURING = CanRespond.DURING
+AFTER = CanRespond.AFTER
 
 
 class FlagsTuple(NamedTuple):
@@ -205,7 +230,7 @@ def examine_recipients(
 
 
 def examine_headers(
-	can_respond: bool = False,
+	can_respond: bool|CanRespond = False,
 	can_add: bool = False,
 	can_modify: bool = False,
 	leading_space: bool = False,
@@ -226,8 +251,14 @@ def examine_headers(
 	unset = ProtocolFlags.NO_HEADERS
 	opts = ProtocolFlags.NONE
 	acts = ActionFlags.NONE
-	if can_respond:
+	if isinstance(can_respond, bool):
+		can_respond = CanRespond.ALL if can_respond else CanRespond.NEVER
+	if CanRespond.BEFORE in can_respond:
+		unset |= ProtocolFlags.NO_DATA | ProtocolFlags.NR_DATA
+	if CanRespond.DURING in can_respond:
 		unset |= ProtocolFlags.NR_HEADER
+	if CanRespond.AFTER in can_respond:
+		unset |= ProtocolFlags.NO_END_OF_HEADERS | ProtocolFlags.NR_END_OF_HEADERS
 	if can_add:
 		acts |= ActionFlags.ADD_HEADERS
 	if can_modify:
@@ -238,7 +269,7 @@ def examine_headers(
 
 
 def examine_body(
-	can_respond: bool = False,
+	can_respond: bool|CanRespond = False,
 	can_replace: bool = False,
 	data_size: SIZES = ProtocolFlags.NONE,
 ) -> Decorator:
@@ -256,8 +287,13 @@ def examine_body(
 	during negotiation and the filter will be disabled.
 	"""
 	unset = ProtocolFlags.NO_BODY
-	if can_respond:
+	if isinstance(can_respond, bool):
+		can_respond = CanRespond.ALL if can_respond else CanRespond.NEVER
+	if CanRespond.BEFORE in can_respond:
+		unset |= ProtocolFlags.NO_END_OF_HEADERS | ProtocolFlags.NR_END_OF_HEADERS
+	if CanRespond.DURING in can_respond:
 		unset |= ProtocolFlags.NR_BODY
+	# CanRespond.AFTER is implicit
 	return modify_flags(
 		unset_options=unset, set_options=data_size,
 		set_actions=ActionFlags.CHANGE_BODY if can_replace else ActionFlags.NONE,
