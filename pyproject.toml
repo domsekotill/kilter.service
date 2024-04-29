@@ -36,8 +36,9 @@ docs = [
 ]
 
 [project.urls]
-Source = "https://code.kodo.org.uk/kilter/kilter.service"
-Documentation = "http://kilter.doc.kodo.org.uk/kilter.service"
+Source = "https://github.com/domsekotill/kilter.service"
+Issues = "https://github.com/domsekotill/kilter.service/issues"
+Documentation = "https://kilter.kodo.org.uk/kilter.service/"
 
 
 [tool.isort]
