@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core ~=3.2"]
+requires = ["flit_core ~=3.8"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -11,9 +11,7 @@ license = {file = "LICENCE.txt"}
 readme = "README.md"
 dynamic = ["version", "description"]
 
-# https://github.com/pypa/flit/issues/476
-requires-python = ">=3.10,<4"
-
+requires-python = "~=3.10"
 dependencies = [
 	"anyio ~=3.0",
 	"async-generator ~=1.2",
