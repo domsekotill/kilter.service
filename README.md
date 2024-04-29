@@ -114,7 +114,9 @@ async def strip_x_headers(session: Session) -> Accept:
 
 	# remove the selected headers during the post phase
 	for header in remove:
-		await session.headers.remove(header)
+		await session.headers.delete(header)
+
+	return Accept()
 ```
 
 ```python
@@ -129,7 +131,9 @@ async def strip_x_headers(session: Session) -> Accept:
 	async with session.headers as headers:
 		async for header in headers:
 			if header.name.startswith("X-"):
-				await session.headers.remove(header)
+				await session.headers.delete(header)
+
+	return Accept()
 ```
 
 
