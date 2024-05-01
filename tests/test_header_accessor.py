@@ -188,7 +188,7 @@ class HeaderAccessorTests(AsyncTestCase):
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_awaited_with(ChangeHeader(1, "Spam", b""))
+		sender._asend.assert_awaited_with(ChangeHeader(2, "Spam", b""))
 		assert result == [
 			Header("Spam", b"spam spam spam"),
 			Header("Eggs", b"and spam"),
@@ -220,7 +220,7 @@ class HeaderAccessorTests(AsyncTestCase):
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_awaited_with(ChangeHeader(1, "Spam", b"no spam!"))
+		sender._asend.assert_awaited_with(ChangeHeader(2, "Spam", b"no spam!"))
 		assert result == [
 			Header("Spam", b"spam spam spam"),
 			Header("Spam", b"no spam!"),
