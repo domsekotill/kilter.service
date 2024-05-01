@@ -375,6 +375,7 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 		while self.session.phase <= Phase.HEADERS:
 			match (await self.session.broadcast.receive()):
 				case Header() as header:
+					header.freeze()
 					self._table.append(header)
 					seen.add(id(header))
 					try:
@@ -403,6 +404,7 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 		while self.session.phase <= Phase.HEADERS:
 			match (await self.session.broadcast.receive()):
 				case Header() as header:
+					header.freeze()
 					self._table.append(header)
 				case EndOfHeaders():
 					return
