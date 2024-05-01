@@ -371,10 +371,12 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 		# in an uncoordinated manner; note the broadcaster is locked at this point
 		for header in self._table:
 			yield header
+		seen = set(id(header) for header in self._table)
 		while self.session.phase <= Phase.HEADERS:
 			match (await self.session.broadcast.receive()):
 				case Header() as header:
 					self._table.append(header)
+					seen.add(id(header))
 					try:
 						yield header
 					except GeneratorExit:
@@ -382,6 +384,12 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 						raise
 				case EndOfHeaders():
 					return
+		# It's possible for collect() to have been called while yielded, in which case the
+		# loop will end. Yield any headers that were stored by collect() but not yet
+		# yielded.
+		for header in self._table:
+			if id(header) not in seen:
+				yield header
 
 	async def collect(self) -> None:
 		"""
@@ -547,7 +555,10 @@ async def _until_editable(session: Session) -> None:
 		return
 	session.body.skip = True
 	while session.phase < Phase.POST:
-		await session.broadcast.receive()
+		if session.phase == Phase.HEADERS:
+			await session.headers.collect()
+		else:
+			await session.broadcast.receive()
 
 
 def _index_by_name(table: Sequence[Header], needle: Header) -> int:
