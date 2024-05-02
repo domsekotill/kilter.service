@@ -445,16 +445,16 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 			case Position(subject="end"):
 				index = len(self._table)
 			case Before():
-				index = self._table.index(position.subject) + 1
+				index = self._table.index(position.subject)
 			case After():  # pragma: no-branch
-				index = self._table.index(position.subject) + 2
+				index = self._table.index(position.subject) + 1
 			case _:
 				raise TypeError("Expect a Position")
 		if index >= len(self._table):
 			await self._editor.asend(AddHeader(header.name, header.value))
 			self._table.append(header)
 		else:
-			await self._editor.asend(InsertHeader(index, header.name, header.value))
+			await self._editor.asend(InsertHeader(index + 1, header.name, header.value))
 			self._table.insert(index, header)
 
 

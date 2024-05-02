@@ -248,7 +248,7 @@ class HeaderAccessorTests(AsyncTestCase):
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_awaited_with(InsertHeader(0, "Ham", b"and eggs"))
+		sender._asend.assert_awaited_with(InsertHeader(1, "Ham", b"and eggs"))
 		assert result == [
 			Header("Ham", b"and eggs"),
 			Header("Spam", b"spam spam spam"),
@@ -311,7 +311,7 @@ class HeaderAccessorTests(AsyncTestCase):
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_awaited_with(InsertHeader(1, "Ham", b"and eggs"))
+		sender._asend.assert_awaited_with(InsertHeader(2, "Ham", b"and eggs"))
 		assert result == [
 			Header("Spam", b"spam spam spam"),
 			Header("Ham", b"and eggs"),
@@ -344,7 +344,7 @@ class HeaderAccessorTests(AsyncTestCase):
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_awaited_with(InsertHeader(1, "Ham", b"and eggs"))
+		sender._asend.assert_awaited_with(InsertHeader(2, "Ham", b"and eggs"))
 		assert result == [
 			Header("Spam", b"spam spam spam"),
 			Header("Ham", b"and eggs"),
@@ -415,8 +415,8 @@ class HeaderAccessorTests(AsyncTestCase):
 			await session.deliver(EndOfMessage(b""))
 
 		sender._asend.assert_has_awaits([
-			call(InsertHeader(1, "Ham", b"and eggs")),
-			call(InsertHeader(2, "Ham", b"and spam")),
+			call(InsertHeader(2, "Ham", b"and eggs")),
+			call(InsertHeader(3, "Ham", b"and spam")),
 		])
 		assert result == [
 			Header("Spam", b"spam spam spam"),
