@@ -310,6 +310,7 @@ class Session:
 			match message:
 				case Unknown():
 					if message.content[:len(bname)] == bname:
+						assert isinstance(message.content, memoryview)
 						return message.content
 				# fake buffers for MAIL and RCPT commands
 				case EnvelopeFrom() if name == "MAIL":
@@ -528,12 +529,14 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 			match (await self.session.broadcast.receive()):
 				case Body() as body:
 					try:
+						assert isinstance(body.content, memoryview)
 						yield body.content
 					except GeneratorExit:
 						self.skip = True
 						raise
 				case EndOfMessage() as eom:
 					if not self.skip:
+						assert isinstance(eom.content, memoryview)
 						yield eom.content
 
 	async def write(self, chunk: bytes) -> None:

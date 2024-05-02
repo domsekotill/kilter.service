@@ -1,3 +1,4 @@
+from builtins import memoryview as mv
 from ipaddress import IPv4Address
 from unittest.mock import call
 
@@ -30,7 +31,7 @@ class SessionTests(AsyncTestCase):
 		await session.deliver(Helo("example.com"))
 		self.assertEqual(session.phase, Phase.MAIL)
 
-		await session.deliver(EnvelopeFrom(b"test@example.com"))
+		await session.deliver(EnvelopeFrom(mv(b"test@example.com")))
 		self.assertEqual(session.phase, Phase.ENVELOPE)
 
 		await session.deliver(Data())
@@ -49,10 +50,10 @@ class SessionTests(AsyncTestCase):
 		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
 		self.assertEqual(session.phase, Phase.CONNECT)
 
-		await session.deliver(EnvelopeRecipient(b"test@example.com", []))
+		await session.deliver(EnvelopeRecipient(mv(b"test@example.com"), []))
 		self.assertEqual(session.phase, Phase.ENVELOPE)
 
-		await session.deliver(Header("To", b"test@example.com"))
+		await session.deliver(Header("To", mv(b"test@example.com")))
 		self.assertEqual(session.phase, Phase.HEADERS)
 
 		await session.deliver(EndOfHeaders())
@@ -75,7 +76,7 @@ class SessionTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Helo("ham"))
 			assert result == "spam"
-			await session.deliver(EnvelopeFrom(b"eggs"))
+			await session.deliver(EnvelopeFrom(mv(b"eggs")))
 
 		assert result == "eggs"
 
@@ -115,7 +116,7 @@ class SessionTests(AsyncTestCase):
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(Helo("ham"))
-			await session.deliver(EnvelopeFrom(b"eggs"))
+			await session.deliver(EnvelopeFrom(mv(b"eggs")))
 
 	async def test_await_helo_missing(self) -> None:
 		"""
@@ -132,7 +133,7 @@ class SessionTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(EnvelopeFrom(b"eggs"))
+			await session.deliver(EnvelopeFrom(mv(b"eggs")))
 
 	async def test_await_mail(self) -> None:
 		"""
@@ -149,7 +150,7 @@ class SessionTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(EnvelopeFrom(b"eggs"))
+			await session.deliver(EnvelopeFrom(mv(b"eggs")))
 
 		assert result == "eggs"
 
@@ -169,7 +170,7 @@ class SessionTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"eggs"))
+			await session.deliver(Header("Spam", mv(b"eggs")))
 			await session.deliver(EndOfHeaders())
 
 	async def test_await_from_missing(self) -> None:
@@ -204,9 +205,9 @@ class SessionTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(EnvelopeRecipient(b"spam", []))
-			await session.deliver(EnvelopeRecipient(b"spam", []))
-			await session.deliver(EnvelopeRecipient(b"eggs", []))
+			await session.deliver(EnvelopeRecipient(mv(b"spam"), []))
+			await session.deliver(EnvelopeRecipient(mv(b"spam"), []))
+			await session.deliver(EnvelopeRecipient(mv(b"eggs"), []))
 			await session.deliver(Data())
 
 		assert result == ["spam", "spam", "eggs"]
@@ -228,7 +229,7 @@ class SessionTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"eggs"))
+			await session.deliver(Header("Spam", mv(b"eggs")))
 			await session.deliver(EndOfHeaders())
 
 	async def test_await_extension(self) -> None:
@@ -248,11 +249,11 @@ class SessionTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Unknown(b"SPAM spam eggs"))
-			await session.deliver(EnvelopeFrom(b"spam", [b"spam", b"eggs"]))
-			await session.deliver(Unknown(b"HAM green eggs"))
-			await session.deliver(EnvelopeRecipient(b"spam", [b"spam", b"eggs"]))
-			await session.deliver(EnvelopeRecipient(b"spam", []))
+			await session.deliver(Unknown(mv(b"SPAM spam eggs")))
+			await session.deliver(EnvelopeFrom(mv(b"spam"), [mv(b"spam"), mv(b"eggs")]))
+			await session.deliver(Unknown(mv(b"HAM green eggs")))
+			await session.deliver(EnvelopeRecipient(mv(b"spam"), [mv(b"spam"), mv(b"eggs")]))
+			await session.deliver(EnvelopeRecipient(mv(b"spam"), []))
 			await session.deliver(Data())
 
 		assert result == [
@@ -278,7 +279,7 @@ class SessionTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"eggs"))
+			await session.deliver(Header("Spam", mv(b"eggs")))
 			await session.deliver(EndOfHeaders())
 
 	async def test_await_extension_missing(self) -> None:
@@ -390,7 +391,7 @@ class SessionTests(AsyncTestCase):
 			await session.deliver(Macro(Helo.ident, {"{spam}": "yes", "{eggs}": "yes"}))
 			await session.deliver(Helo("test.example.com"))
 			await session.deliver(Macro(Helo.ident, {"{spam}": "no", "{ham}": "maybe"}))
-			await session.deliver(EnvelopeFrom(b"test@example.com"))
+			await session.deliver(EnvelopeFrom(mv(b"test@example.com")))
 
 	async def test_delay(self) -> None:
 		"""
@@ -410,7 +411,7 @@ class SessionTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 
 			await session.deliver(Helo("test.example.com"))
-			await session.deliver(EnvelopeFrom(b"test@example.com"))
+			await session.deliver(EnvelopeFrom(mv(b"test@example.com")))
 
 	async def test_abort_in_helo(self) -> None:
 		"""

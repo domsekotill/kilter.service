@@ -1,3 +1,4 @@
+from builtins import memoryview as mv
 from ipaddress import IPv4Address
 from pathlib import Path
 
@@ -36,9 +37,9 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Body(b"Spam, "))
-			await session.deliver(Body(b"spam, "))
-			await session.deliver(EndOfMessage(b"and eggs"))
+			await session.deliver(Body(mv(b"Spam, ")))
+			await session.deliver(Body(mv(b"spam, ")))
+			await session.deliver(EndOfMessage(mv(b"and eggs")))
 
 		assert result == b"Spam, spam, and eggs"
 
@@ -68,10 +69,10 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			assert Continue == await session.deliver(Body(b"Spam, "))
-			assert Skip == await session.deliver(Body(b"spam, "))
-			assert Skip == await session.deliver(Body(b"spam, "))
-			assert Continue == await session.deliver(EndOfMessage(b"and eggs"))
+			assert Continue == await session.deliver(Body(mv(b"Spam, ")))
+			assert Skip == await session.deliver(Body(mv(b"spam, ")))
+			assert Skip == await session.deliver(Body(mv(b"spam, ")))
+			assert Continue == await session.deliver(EndOfMessage(mv(b"and eggs")))
 
 		assert result1 == b"Spam, "
 		assert result2 == b""

@@ -1,3 +1,4 @@
+from builtins import memoryview as mv
 from ipaddress import IPv4Address
 from unittest.mock import call
 
@@ -35,13 +36,13 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Spam", b"spam?"))
-			await session.deliver(Header("Eggs", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Spam", mv(b"spam?")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 
 			# try and throw the iterator off!
-			await session.deliver(Header("Dead-Parrot", b"and spam"))
+			await session.deliver(Header("Dead-Parrot", mv(b"and spam")))
 
 		assert result == ["Spam", "Spam", "Eggs"]
 
@@ -70,15 +71,15 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Spam", b"spam?"))
-			await session.deliver(Header("Eggs", b"and spam"))
-			await session.deliver(Header("Spam", b"spam spam spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Spam", mv(b"spam?")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
 			await session.deliver(EndOfHeaders())
 
 			# Try and throw the iterator off!  The filter should not await any further
 			# messages after the EndOfHeaders one.
-			await session.deliver(Header("Dead-Parrot", b"and spam"))
+			await session.deliver(Header("Dead-Parrot", mv(b"and spam")))
 
 		assert result1 == ["Spam", "Spam", "Eggs"]
 		assert result2 == ["Spam", "Spam", "Eggs", "Spam"]
@@ -102,9 +103,9 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Spam", b"spam?"))
-			await session.deliver(Header("Eggs", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Spam", mv(b"spam?")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 
 		assert result == ["Spam", "Spam", "Eggs"]
@@ -128,9 +129,9 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Spam", b"spam?"))
-			await session.deliver(Header("Eggs", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Spam", mv(b"spam?")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
 			await session.deliver(Body(b""))
 
 		assert result == ["Spam", "Spam", "Eggs"]
@@ -151,10 +152,10 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Spam", b"spam?"))
-			await session.deliver(Header("Eggs", b"and spam"))
-			await session.deliver(Header("Ham", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Spam", mv(b"spam?")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
+			await session.deliver(Header("Ham", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 
 		assert result == ["Spam", "Spam", "Ham"], result
@@ -178,10 +179,10 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Spam", b"spam?"))
-			await session.deliver(Header("Eggs", b"and spam"))
-			await session.deliver(Header("Ham", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Spam", mv(b"spam?")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
+			await session.deliver(Header("Ham", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
@@ -210,10 +211,10 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Spam", b"spam?"))
-			await session.deliver(Header("Eggs", b"and spam"))
-			await session.deliver(Header("Ham", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Spam", mv(b"spam?")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
+			await session.deliver(Header("Ham", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
@@ -243,8 +244,8 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Eggs", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
@@ -273,8 +274,8 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Eggs", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
@@ -306,8 +307,8 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Eggs", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
@@ -339,8 +340,8 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Eggs", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
@@ -372,8 +373,8 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Eggs", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
@@ -409,8 +410,8 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("Spam", b"spam spam spam"))
-			await session.deliver(Header("Eggs", b"and spam"))
+			await session.deliver(Header("Spam", mv(b"spam spam spam")))
+			await session.deliver(Header("Eggs", mv(b"and spam")))
 			await session.deliver(EndOfHeaders())
 			await session.deliver(EndOfMessage(b""))
 
@@ -440,8 +441,8 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("From", b"test@example.com"))
-			await session.deliver(Header("To", b"test@example.com"))
+			await session.deliver(Header("From", mv(b"test@example.com")))
+			await session.deliver(Header("To", mv(b"test@example.com")))
 			await session.deliver(EndOfHeaders())
 
 	async def test_athrow_type(self) -> None:
@@ -462,8 +463,8 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("From", b"test@example.com"))
-			await session.deliver(Header("To", b"test@example.com"))
+			await session.deliver(Header("From", mv(b"test@example.com")))
+			await session.deliver(Header("To", mv(b"test@example.com")))
 			await session.deliver(EndOfHeaders())
 
 	async def test_athrow_type_msg(self) -> None:
@@ -485,8 +486,8 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("From", b"test@example.com"))
-			await session.deliver(Header("To", b"test@example.com"))
+			await session.deliver(Header("From", mv(b"test@example.com")))
+			await session.deliver(Header("To", mv(b"test@example.com")))
 			await session.deliver(EndOfHeaders())
 
 	async def test_athrow_inst(self) -> None:
@@ -508,6 +509,6 @@ class HeaderAccessorTests(AsyncTestCase):
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
-			await session.deliver(Header("From", b"test@example.com"))
-			await session.deliver(Header("To", b"test@example.com"))
+			await session.deliver(Header("From", mv(b"test@example.com")))
+			await session.deliver(Header("To", mv(b"test@example.com")))
 			await session.deliver(EndOfHeaders())
