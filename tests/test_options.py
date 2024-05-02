@@ -108,11 +108,11 @@ class Tests(TestCase):
 		flags = options.get_flags(filtr)
 
 		assert flags.set_options == SKIP|NR_CONNECT, \
-				f"{flags.set_options!r} is not SKIP"
+			f"{flags.set_options!r} is not SKIP"
 		assert flags.unset_options == HEADER_LEADING_SPACE|SKIP, \
-				f"{flags.unset_options!r} is not HEADER_LEADING_SPACE"
+			f"{flags.unset_options!r} is not HEADER_LEADING_SPACE"
 		assert flags.set_actions == ADD_HEADERS|CHANGE_HEADERS, \
-				f"{flags.set_actions!r} is not ADD_HEADERS"
+			f"{flags.set_actions!r} is not ADD_HEADERS"
 
 	def test_responds_to_connect(self) -> None:
 		"""

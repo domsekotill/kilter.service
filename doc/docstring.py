@@ -212,7 +212,7 @@ def dot_import_first(module: ModuleType, cls: type|None, name: str) -> tuple[obj
 		if cls is None:
 			raise
 		return (
-			(cls, module, f"{module.__name__}.{cls.__name__}") if name == "self" else \
+			(cls, module, f"{module.__name__}.{cls.__name__}") if name == "self" else
 			(getattr(cls, name), cls, f"{module.__name__}.{cls.__name__}.{name}")
 		)
 

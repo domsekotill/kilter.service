@@ -1,4 +1,4 @@
-# Copyright 2023 Dominik Sekotill <dom.sekotill@kodo.org.uk>
+# Copyright 2023-2024 Dominik Sekotill <dom.sekotill@kodo.org.uk>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -194,7 +194,7 @@ def examine_recipients(
 	can_respond: bool = False,
 	can_add: bool = False,
 	can_remove: bool = False,
-	include_rejected: bool= False,
+	include_rejected: bool = False,
 	with_parameters: bool = False,
 ) -> Decorator:
 	"""

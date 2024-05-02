@@ -67,7 +67,6 @@ class HeaderAccessorTests(AsyncTestCase):
 				async for header in headers:
 					result2.append(header.name)
 
-
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
@@ -100,7 +99,6 @@ class HeaderAccessorTests(AsyncTestCase):
 					assert session.phase == Phase.BODY
 					result.append(header.name)
 
-
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
@@ -126,7 +124,6 @@ class HeaderAccessorTests(AsyncTestCase):
 				async for header in headers:
 					assert session.phase == Phase.BODY
 					result.append(header.name)
-
 
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)

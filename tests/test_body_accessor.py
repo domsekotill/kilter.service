@@ -65,7 +65,6 @@ class HeaderAccessorTests(AsyncTestCase):
 				async for chunk in body:
 					result2 += chunk
 
-
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
 			await trio.testing.wait_all_tasks_blocked()
