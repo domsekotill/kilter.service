@@ -116,7 +116,8 @@ Check Tag:
 
     wheel_path = glob("dist/*.whl")[0]
     wheel = Wheel(wheel_path)
-    assert Version("$CI_COMMIT_TAG").release == Version(wheel.version).release
+    assert Version("$CI_COMMIT_TAG").release == Version(wheel.version).release, \
+      f"Pkg version {wheel.version} does not match tag"
     END
 
 
