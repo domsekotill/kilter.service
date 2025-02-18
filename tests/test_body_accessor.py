@@ -84,13 +84,6 @@ class HeaderAccessorTests(AsyncTestCase):
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
 
-		# Temporary hack for missing equality check in kilter.protocol
-		def _eq(s: ReplaceBody, o: object) -> bool:
-			if not isinstance(o, type(s)):
-				return NotImplemented
-			return s.content == o.content
-		ReplaceBody.__eq__ = _eq  # type: ignore
-
 		@with_session(session)
 		async def test_filter() -> None:
 			await session.body.write(b"A new message")
@@ -108,13 +101,6 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		sender = MockEditor()
 		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
-
-		# Temporary hack for missing equality check in kilter.protocol
-		def _eq(s: ReplaceBody, o: object) -> bool:
-			if not isinstance(o, type(s)):
-				return NotImplemented
-			return s.content == o.content
-		ReplaceBody.__eq__ = _eq  # type: ignore
 
 		@with_session(session)
 		async def test_filter() -> None:
