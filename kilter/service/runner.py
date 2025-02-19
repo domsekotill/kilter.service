@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Dominik Sekotill <dom.sekotill@kodo.org.uk>
+# Copyright 2022-2023, 2025 Dominik Sekotill <dom.sekotill@kodo.org.uk>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -374,9 +374,8 @@ class _TaskRunner:
 				if isinstance(message, Macro):
 					await session.deliver(message)
 					continue
-				# TODO: Upgrade and remove ignores once python/mypy#14242 is in
-				assert isinstance(message, _VALID_EVENT_MESSAGE)  # type: ignore[misc,arg-type]
-				resp = await session.deliver(message)  # type: ignore[arg-type]
+				assert isinstance(message, _VALID_EVENT_MESSAGE)
+				resp = await session.deliver(message)
 				if isinstance(message, Abort):
 					await channel.send(Continue())
 					await channel.aclose()

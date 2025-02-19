@@ -28,14 +28,13 @@ repos:
     exclude_types: [markdown, plain-text]
     stages: [commit, manual]
 
-# - repo: https://github.com/jorisroovers/gitlint
-- repo: https://github.com/hongqn/gitlint
-  rev: v0.15.1
+- repo: https://github.com/jorisroovers/gitlint
+  rev: v0.19.1
   hooks:
   - id: gitlint
 
 - repo: https://code.kodo.org.uk/dom/pre-commit-hooks
-  rev: v0.6.1
+  rev: v0.6.2
   hooks:
   - id: check-executable-modes
   - id: check-for-squash
@@ -57,9 +56,6 @@ repos:
   hooks:
   - id: unimport
     args: [--remove]
-    types: []
-    types_or: [python, pyi]
-    additional_dependencies: [libcst >=0.4.0]
     stages: [commit, manual]
 
 - repo: https://github.com/pycqa/isort
@@ -72,9 +68,6 @@ repos:
   rev: v3.1.0
   hooks:
   - id: add-trailing-comma
-    args: [--py36-plus]
-    types: []
-    types_or: [python, pyi]
     stages: [commit, manual]
 
 - repo: https://github.com/flakeheaven/flakeheaven
@@ -90,7 +83,7 @@ repos:
     - pydocstyle[toml]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.10.0
+  rev: v1.15.0
   hooks:
   - id: mypy
     args: [kilter/service, tests]
