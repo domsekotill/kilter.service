@@ -318,7 +318,7 @@ class SessionTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_has_awaits([
+		sender.mock_send.assert_has_awaits([
 			call(ChangeSender("test@example.com")),
 			call(ChangeSender("test@example.com", "SPAM")),
 		])
@@ -342,7 +342,7 @@ class SessionTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_has_awaits([
+		sender.mock_send.assert_has_awaits([
 			call(AddRecipient("test@example.com")),
 			call(AddRecipientPar("test@example.com", "SPAM")),
 		])
@@ -365,7 +365,7 @@ class SessionTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_has_awaits([
+		sender.mock_send.assert_has_awaits([
 			call(RemoveRecipient("test@example.com")),
 		])
 

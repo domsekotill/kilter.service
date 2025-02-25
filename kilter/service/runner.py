@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from collections.abc import AsyncGenerator
 from typing import Final
 from typing import TypeAlias
 from warnings import warn
@@ -27,20 +26,21 @@ from async_generator import aclosing
 from typing_extensions import Self
 
 from kilter.protocol.buffer import SimpleBuffer
-from kilter.protocol.core import EditMessage
 from kilter.protocol.core import EventMessage
+from kilter.protocol.core import FilterMessage
 from kilter.protocol.core import FilterProtocol
 from kilter.protocol.core import ResponseMessage
-from kilter.protocol.messages import ProtocolFlags
+from kilter.protocol.messages import *
 
 from .options import get_flags
 from .options import get_macros
-from .session import *
+from .session import Aborted
+from .session import Filter
+from .session import Session
 from .util import Broadcast
 from .util import qualname
 
 MessageChannel: TypeAlias = anyio.abc.ObjectStream[Message]
-Sender: TypeAlias = AsyncGenerator[None, ResponseMessage|EditMessage|Negotiate|Skip]
 
 kiB: Final = 2**10
 MiB: Final = 2**20
@@ -80,6 +80,26 @@ class _Broadcast(Broadcast[EventMessage]):
 			self.task_status = None
 
 
+class Sender:
+	"""
+	Concrete implementation of `kilter.service.session.Sender`
+	"""
+
+	def __init__(self, client: anyio.abc.ByteSendStream, proto: FilterProtocol) -> None:
+		self.client = client
+		self.proto = proto
+
+	async def send(self, message: FilterMessage) -> None:
+		"""
+		Encode and send a message to the client stream
+		"""
+		buffer = SimpleBuffer(1*kiB)
+		self.proto.write_to(buffer, message)
+		await self.client.send(buffer[:])
+		if __debug__:
+			_logger.debug(f"sent: {message}")
+
+
 class Runner:
 	"""
 	A filter runner that coordinates passing data between a stream and multiple filters
@@ -100,15 +120,13 @@ class Runner:
 		"""
 		buff = SimpleBuffer(1*MiB)
 		proto = FilterProtocol(abort_on_unknown=True)
-		sender = _sender(client, proto)
+		sender = Sender(client, proto)
 		macro: Macro|None = None
 		aborted = False
 
-		await sender.asend(None)  # type: ignore # initialise
-
 		async with (
+			aclosing(client),
 			anyio.create_task_group() as tasks,
-			aclosing(sender), aclosing(client),
 			_TaskRunner(tasks) as runner,
 		):
 			while 1:
@@ -126,7 +144,7 @@ class Runner:
 						_logger.debug(f"received: {message}")
 					match message:
 						case Negotiate():
-							await sender.asend(await self._negotiate(message))
+							await sender.send(await self._negotiate(message))
 						case Macro() as macro:
 							# Note that this Macro will hang around as "macro"; this is for
 							# Connect messages.
@@ -143,7 +161,7 @@ class Runner:
 									self.filters.remove(notif.filter)
 								case c_resp if needs_response:
 									assert c_resp is not None and not isinstance(c_resp, _CloseFilter)
-									await sender.asend(c_resp)
+									await sender.send(c_resp)
 								case c_resp:
 									raise RuntimeError(f"unexpected response: {c_resp}")
 						case Abort():
@@ -164,7 +182,7 @@ class Runner:
 									self.filters.remove(notif.filter)
 								case resp if needs_response:
 									assert resp is not None and not isinstance(resp, _CloseFilter)
-									await sender.asend(resp)
+									await sender.send(resp)
 								case resp:
 									raise RuntimeError(f"unexpected response: {resp}")
 
@@ -390,13 +408,3 @@ def _make_message_channel() -> tuple[MessageChannel, MessageChannel]:
 	lsend, rrecv = anyio.create_memory_object_stream(1, Message)  # type: ignore
 	rsend, lrecv = anyio.create_memory_object_stream(1, Message)  # type: ignore
 	return StapledObjectStream(lsend, lrecv), StapledObjectStream(rsend, rrecv)
-
-
-async def _sender(client: anyio.abc.ByteSendStream, proto: FilterProtocol) -> Sender:
-	buff = SimpleBuffer(1*kiB)
-	while 1:
-		proto.write_to(buff, (message := (yield)))
-		if __debug__:
-			_logger.debug(f"sent: {message}")
-		await client.send(buff[:])
-		del buff[:]

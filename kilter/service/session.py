@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Dominik Sekotill <dom.sekotill@kodo.org.uk>
+# Copyright 2022-2025 Dominik Sekotill <dom.sekotill@kodo.org.uk>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,14 @@ class Filter(Protocol):
 	"""
 
 	async def __call__(self, session: Session, /) -> ResponseMessage: ...  # noqa: D102
+
+
+class Sender(Protocol):
+	"""
+	Senders asynchronously handle sending messages with their "send" method
+	"""
+
+	async def send(self, message: EditMessage) -> None: ...  # noqa: D102
 
 
 class Phase(int, Enum):
@@ -191,14 +199,14 @@ class Session:
 	def __init__(
 		self,
 		connmsg: Connect,
-		sender: AsyncGenerator[None, EditMessage],
+		sender: Sender,
 		broadcast: util.Broadcast[EventMessage]|None = None,
 	):
 		self.host = connmsg.hostname
 		self.address = connmsg.address
 		self.port = connmsg.port
 
-		self._editor = sender
+		self.sender = sender
 		self.broadcast = broadcast or util.Broadcast[EventMessage]()
 
 		self.macros = dict[str, str]()
@@ -326,14 +334,14 @@ class Session:
 		Move onto the `Phase.POST` phase and instruct the MTA to change the sender address
 		"""
 		await _until_editable(self)
-		await self._editor.asend(ChangeSender(sender, args or None))
+		await self.sender.send(ChangeSender(sender, args or None))
 
 	async def add_recipient(self, recipient: str, args: str = "") -> None:
 		"""
 		Move onto the `Phase.POST` phase and instruct the MTA to add a new recipient address
 		"""
 		await _until_editable(self)
-		await self._editor.asend(
+		await self.sender.send(
 			AddRecipientPar(recipient, args) if args else AddRecipient(recipient),
 		)
 
@@ -342,7 +350,7 @@ class Session:
 		Move onto the `Phase.POST` phase and instruct the MTA to remove a recipient address
 		"""
 		await _until_editable(self)
-		await self._editor.asend(RemoveRecipient(recipient))
+		await self.sender.send(RemoveRecipient(recipient))
 
 
 class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
@@ -354,9 +362,9 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 	entered.
 	"""
 
-	def __init__(self, session: Session, sender: AsyncGenerator[None, EditMessage]):
+	def __init__(self, session: Session, sender: Sender):
 		self.session = session
-		self._editor = sender
+		self.sender = sender
 		self._table = list[Header]()
 		self._aiter: AsyncGenerator[Header, None]
 
@@ -417,7 +425,7 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 		await self.collect()
 		await _until_editable(self.session)
 		index = _index_by_name(self._table, header)
-		await self._editor.asend(ChangeHeader(index, header.name, b""))
+		await self.sender.send(ChangeHeader(index, header.name, b""))
 		self._table.remove(header)
 
 	async def update(self, header: Header, value: bytes) -> None:
@@ -427,7 +435,7 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 		await self.collect()
 		await _until_editable(self.session)
 		index = _index_by_name(self._table, header)
-		await self._editor.asend(ChangeHeader(index, header.name, value))
+		await self.sender.send(ChangeHeader(index, header.name, value))
 		index = self._table.index(header)
 		self._table[index].value = value
 
@@ -452,10 +460,10 @@ class HeadersAccessor(AsyncContextManager["HeaderIterator"]):
 			case _:
 				raise TypeError("Expect a Position")
 		if index >= len(self._table):
-			await self._editor.asend(AddHeader(header.name, header.value))
+			await self.sender.send(AddHeader(header.name, header.value))
 			self._table.append(header)
 		else:
-			await self._editor.asend(InsertHeader(index + 1, header.name, header.value))
+			await self.sender.send(InsertHeader(index + 1, header.name, header.value))
 			self._table.insert(index, header)
 
 
@@ -508,9 +516,9 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 	entered.
 	"""
 
-	def __init__(self, session: Session, sender: AsyncGenerator[None, EditMessage]):
+	def __init__(self, session: Session, sender: Sender):
 		self.session = session
-		self._editor = sender
+		self.sender = sender
 		self.skip = False
 		self._aiter: AsyncGenerator[memoryview, None] | None = None
 
@@ -554,7 +562,7 @@ class BodyAccessor(AsyncContextManager[AsyncIterator[memoryview]]):
 				stacklevel=2,
 			)
 		await _until_editable(self.session)
-		await self._editor.asend(ReplaceBody(chunk))
+		await self.sender.send(ReplaceBody(chunk))
 
 
 async def _until_editable(session: Session) -> None:

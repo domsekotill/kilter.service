@@ -93,7 +93,7 @@ class HeaderAccessorTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_awaited_with(ReplaceBody(b"A new message"))
+		sender.mock_send.assert_awaited_with(ReplaceBody(b"A new message"))
 
 	async def test_write_in_iter_context(self) -> None:
 		"""
@@ -114,4 +114,4 @@ class HeaderAccessorTests(AsyncTestCase):
 			await trio.testing.wait_all_tasks_blocked()
 			await session.deliver(EndOfMessage(b""))
 
-		sender._asend.assert_awaited_with(ReplaceBody(b"A new message"))
+		sender.mock_send.assert_awaited_with(ReplaceBody(b"A new message"))
