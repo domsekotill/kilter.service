@@ -86,10 +86,10 @@ repos:
   rev: v1.15.0
   hooks:
   - id: mypy
-    args: [kilter/service, tests]
+    args: [kilter/service, tests, --python-version=3.11]
     pass_filenames: false
     additional_dependencies:
-    - anyio ~=3.1
+    - anyio ~=4.0
     - kilter.protocol ~=0.6.0
     - sphinx
     - trio-typing

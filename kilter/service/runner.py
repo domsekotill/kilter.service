@@ -405,6 +405,6 @@ class _TaskRunner:
 
 
 def _make_message_channel() -> tuple[MessageChannel, MessageChannel]:
-	lsend, rrecv = anyio.create_memory_object_stream(1, Message)  # type: ignore
-	rsend, lrecv = anyio.create_memory_object_stream(1, Message)  # type: ignore
+	lsend, rrecv = anyio.create_memory_object_stream[Message](1)
+	rsend, lrecv = anyio.create_memory_object_stream[Message](1)
 	return StapledObjectStream(lsend, lrecv), StapledObjectStream(rsend, rrecv)

@@ -50,8 +50,8 @@ class MockMessageStream:
 		self.closed = False
 
 	async def __aenter__(self) -> Self:
-		send_obj, recv_bytes = anyio.create_memory_object_stream(5, bytes)
-		send_bytes, recv_obj = anyio.create_memory_object_stream(5, bytes)
+		send_obj, recv_bytes = anyio.create_memory_object_stream[bytes](5)
+		send_bytes, recv_obj = anyio.create_memory_object_stream[bytes](5)
 
 		self._stream = StapledObjectStream(send_obj, recv_obj)
 		self.peer_stream = StapledByteStream(

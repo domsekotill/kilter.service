@@ -11,9 +11,9 @@ license = {file = "LICENCE.txt"}
 readme = "README.md"
 dynamic = ["version", "description"]
 
-requires-python = "~=3.10"
+requires-python = "~=3.11"
 dependencies = [
-	"anyio ~=3.0",
+	"anyio ~=4.0",
 	"async-generator ~=1.2",
 	"kilter.protocol ~=0.6.0",
 	"typing-extensions ~=4.0",
@@ -27,7 +27,7 @@ classifiers = [
 
 [project.optional-dependencies]
 tests = [
-	"trio <0.22",  # Until anyio supports BaseExceptionGroup
+	"trio",
 ]
 docs = [
 	"sphinx ~=5.0",
