@@ -15,7 +15,7 @@ LOCALHOST = IPv4Address("127.0.0.1")
 THIS_MODULE = Path(__file__)
 
 
-class HeaderAccessorTests(AsyncTestCase):
+class BodyAccessorTests(AsyncTestCase):
 	"""
 	Tests for the kilter.service.session.HeaderAccessor class
 	"""
@@ -61,10 +61,6 @@ class HeaderAccessorTests(AsyncTestCase):
 					if chunk[:4] == b"spam":
 						break
 					result1 += chunk
-
-			async with session.body as body:
-				async for chunk in body:
-					result2 += chunk
 
 		async with trio.open_nursery() as tg:
 			tg.start_soon(test_filter)
