@@ -219,6 +219,16 @@ class RunnerTests(AsyncTestCase):
 		assert contents1 == b"This is a message sent in multiple chunks. Bye", contents1
 		assert contents2 == b"This is a message sent ", contents2
 
+	async def test_multiple_same(self) -> None:
+		"""
+		Check that an exception is raised when a filter is added multiple times
+		"""
+		async def test_filter(session: Session) -> Accept:
+			return Accept()
+
+		with self.assertWarns(UserWarning):
+			Runner(test_filter, test_filter)
+
 	async def test_abort(self) -> None:
 		"""
 		Check that a runner closes cleanly when it receives an Abort
