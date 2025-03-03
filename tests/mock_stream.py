@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from functools import wraps
 from types import TracebackType
 from typing import AsyncContextManager
+from typing import Literal
 
 import anyio
 from anyio.streams.buffered import BufferedByteReceiveStream
@@ -24,6 +25,8 @@ from kilter.service import Runner
 P = typing.ParamSpec("P")
 SendT = typing.TypeVar("SendT")
 YieldT = typing.TypeVar("YieldT")
+
+DEFAULT_PEER = "test.example.com"
 
 
 def _make_aclosing(
@@ -87,16 +90,55 @@ class MockMessageStream:
 			await anyio.wait_all_tasks_blocked()
 			yield stream_mock
 
+	@classmethod
+	@asynccontextmanager
+	async def connected(
+		cls,
+		runner: Runner,
+		host: str = DEFAULT_PEER,
+		/,
+		helo: str|None|Literal[False] = DEFAULT_PEER,
+	) -> AsyncIterator[Self]:
+		"""
+		Return a context manager that yields a prepared and connected stream mock
+
+		Negotiate, Connect, and optionally Helo messages will have been sent over the stream
+		once the context has been entered.
+		"""
+		async with cls.started(runner) as self:
+			await self.send_and_expect(make_negotiate(), Negotiate)
+			await self.send_and_expect(Connect(host), Continue)
+			if helo:
+				await self.send_msg(Helo(helo))
+			yield self
+			if helo:
+				await self._abort()
+			await self.close()
+
+	@asynccontextmanager
+	async def envelope(self, sender: bytes, *recipients: bytes) -> AsyncIterator[None]:
+		"""
+		Return a context manager that encapsulates a message envelope
+		"""
+		await self.send_and_expect(EnvelopeFrom(sender), Continue)
+		for recipient in recipients:
+			await self.send_and_expect(EnvelopeRecipient(recipient), Continue)
+		yield
+		await self._abort()
+
 	async def abort(self) -> None:
 		"""
 		Send Abort and close the stream
 		"""
+		await self._abort()
+		await self.close()
+
+	async def _abort(self) -> None:
 		try:
 			resp = await self.send_msg(Abort())
 		except anyio.BrokenResourceError:
 			return
 		assert len(resp) == 0, resp
-		await self.close()
 
 	async def close(self) -> None:
 		"""
@@ -158,3 +200,12 @@ class MockMessageStream:
 				assert isinstance(r, e), f"expected {e}, got {type(r)}"
 			else:
 				assert r == e, r
+
+
+def make_negotiate(options: int = 0, actions: int = 0x1ff) -> Negotiate:
+	"""
+	Construct a Negotiate message from integer flags
+
+	Defaults to all actions, and no protocol options.
+	"""
+	return Negotiate(6, ActionFlags(actions), ProtocolFlags(options))
