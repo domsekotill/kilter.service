@@ -111,7 +111,9 @@ class Runner:
 	def __init__(self, *filters: Filter):
 		if len(filters) == 0:  # pragma: no-cover
 			raise TypeError("Runner requires at least one filter to run")
-		self.filters = list(filters)
+		self.filters = set(filters)
+		if len(filters) != len(self.filters):
+			warn("Repeated filters will only be run once", stacklevel=2)
 		self.use_skip = True
 
 	async def __call__(self, client: anyio.abc.ByteStream) -> None:
