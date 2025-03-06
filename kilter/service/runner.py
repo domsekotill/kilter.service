@@ -36,6 +36,7 @@ from .options import get_flags
 from .options import get_macros
 from .session import Aborted
 from .session import Filter
+from .session import FilterResponse
 from .session import Session
 from .util import Broadcast
 from .util import qualname
@@ -45,8 +46,6 @@ MessageChannel: TypeAlias = anyio.abc.ObjectStream[Message]
 kiB: Final = 2**10
 MiB: Final = 2**20
 
-# TODO: Convert to Union type alias once python/mypy#14242 is fixed
-_VALID_FINAL_RESPONSES: Final = Reject, Discard, Accept, TemporaryFailure, ReplyCode
 _VALID_EVENT_MESSAGE: TypeAlias = Helo | EnvelopeFrom | EnvelopeRecipient | Data | \
 	Unknown | Header | EndOfHeaders | Body | EndOfMessage | Abort
 
@@ -378,7 +377,7 @@ class _TaskRunner:
 				except Exception:
 					_logger.exception(f"Error in filter {qualname(fltr)}")
 					final_resp = TemporaryFailure()
-				if not isinstance(final_resp, _VALID_FINAL_RESPONSES):
+				if not isinstance(final_resp, FilterResponse):
 					warn(f"expected a valid response from {qualname(fltr)}, got {final_resp}")
 					final_resp = TemporaryFailure()
 

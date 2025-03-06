@@ -23,15 +23,17 @@ from types import TracebackType
 from typing import AsyncContextManager
 from typing import Literal
 from typing import Protocol
+from typing import TypeAlias
 from warnings import warn
 
 from typing_extensions import Self
 
 from ..protocol.core import EditMessage
 from ..protocol.core import EventMessage
-from ..protocol.core import ResponseMessage
 from ..protocol.messages import *
 from . import util
+
+FilterResponse: TypeAlias = Accept | Reject | Discard | ReplyCode
 
 
 class Aborted(BaseException):
@@ -45,7 +47,7 @@ class Filter(Protocol):
 	Filters are callables that accept a `Session` and return a response
 	"""
 
-	async def __call__(self, session: Session, /) -> ResponseMessage: ...  # noqa: D102
+	async def __call__(self, session: Session, /) -> FilterResponse: ...  # noqa: D102
 
 
 class Sender(Protocol):
