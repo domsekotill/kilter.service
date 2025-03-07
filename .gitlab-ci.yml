@@ -12,6 +12,10 @@ workflow:
   - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$$/
     variables:
       PUSH_PACKAGE: "true"
+      PUSH_DOCS: "true"
+  - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$$/
+    variables:
+      PUSH_DOCS: "true"
   - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+/
   - if: $CI_COMMIT_BRANCH
 
@@ -170,7 +174,7 @@ pages:
   image: alpine
   dependencies: [Documentation]
   rules:
-  - if: $PUSH_PACKAGE
+  - if: $PUSH_DOCS
   script:
   - mv build/html public
   artifacts:
