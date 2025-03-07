@@ -67,6 +67,12 @@ class Phase(int, Enum):
 	raised by `Session` methods.
 	"""
 
+	INIT = 0
+	"""
+	This phase is the pre-connected phase of a session; this phase will be completed before
+	users see the session object.
+	"""
+
 	CONNECT = 1
 	"""
 	This phase is the starting phase of a session, during which a HELO/EHLO message may be
@@ -201,13 +207,12 @@ class Session:
 
 	def __init__(
 		self,
-		connmsg: Connect,
 		sender: Sender,
 		broadcast: util.Broadcast[EventMessage]|None = None,
 	):
-		self.host = connmsg.hostname
-		self.address = connmsg.address
-		self.port = connmsg.port
+		self.host = ""
+		self.address = None
+		self.port = 0
 
 		self.sender = sender
 		self.broadcast = broadcast or util.Broadcast[EventMessage]()
@@ -218,7 +223,9 @@ class Session:
 
 		# Phase checking is a bit fuzzy as a filter may not request every message,
 		# so some phases will be skipped; checks should not try to exactly match a phase.
-		self.phase = Phase.CONNECT
+		self.phase = Phase.INIT
+
+		self._helo: Helo|None = None
 
 	async def __aenter__(self) -> Self:
 		await self.broadcast.__aenter__()
@@ -229,11 +236,22 @@ class Session:
 		# on session close, wake up any remaining deliver() awaitables
 		await self.broadcast.shutdown_hook()
 
+	def _reset(self) -> None:
+		self.headers = HeadersAccessor(self, self.sender)
+		self.body = BodyAccessor(self, self.sender)
+
 	async def deliver(self, message: EventMessage) -> type[Continue]|type[Skip]:
 		"""
 		Deliver a message (or its contents) to a task waiting for it
 		"""
 		match message:
+			case Connect():
+				self.host = message.hostname
+				self.address = message.address
+				self.port = message.port
+				async with self.broadcast:
+					self.phase = Phase.CONNECT
+				return Continue
 			case Macro():
 				self.macros.update(message.macros)
 				return Continue  # not strictly necessary, but type checker needs something
@@ -241,6 +259,7 @@ class Session:
 				async with self.broadcast:
 					self.phase = Phase.CONNECT
 				await self.broadcast.abort(Aborted)
+				self._reset()
 				return Continue
 			case Helo():
 				phase = Phase.MAIL
@@ -266,9 +285,12 @@ class Session:
 				"Session.helo() must be awaited before any other async features of a "
 				"Session",
 			)
+		if self._helo:
+			return self._helo.hostname
 		while self.phase <= Phase.CONNECT:
 			message = await self.broadcast.receive()
 			if isinstance(message, Helo):
+				self._helo = message
 				return message.hostname
 		raise RuntimeError("HELO/EHLO event not received")
 

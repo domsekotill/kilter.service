@@ -24,7 +24,7 @@ class BodyAccessorTests(AsyncTestCase):
 		"""
 		Check that the body iterator works as expected
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 		result = b""
 
 		@with_session(session)
@@ -47,7 +47,7 @@ class BodyAccessorTests(AsyncTestCase):
 		"""
 		Check that Body (and EOM) messages are skipped after breaking out of a loop
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 		result1 = b""
 		result2 = b""
 
@@ -78,7 +78,7 @@ class BodyAccessorTests(AsyncTestCase):
 		Check that `write()` works as expected
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 
 		@with_session(session)
 		async def test_filter() -> None:
@@ -96,7 +96,7 @@ class BodyAccessorTests(AsyncTestCase):
 		Check that `write()` in an async with context issues a warning
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 
 		@with_session(session)
 		async def test_filter() -> None:

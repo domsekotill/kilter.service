@@ -24,7 +24,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		Check that header iterator works as expected
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 		result = []
 
 		@with_session(session)
@@ -50,7 +50,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		Check that all headers are collected when breaking out of a loop
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 		result1 = []
 		result2 = []
 
@@ -88,7 +88,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		Check that all headers are collected when awaiting `collect()`
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 		result = []
 
 		@with_session(session)
@@ -114,7 +114,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		Check that all headers are collected when awaiting `collect()` if EOH is missed
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 		result = []
 
 		@with_session(session)
@@ -140,7 +140,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		Check that `restrict()` works as expected
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 		result = []
 
 		@with_session(session)
@@ -165,7 +165,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		Check that `delete()` works as expected
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 		result = []
 
 		@with_session(session)
@@ -198,7 +198,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		Check that `update()` works as expected
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 		result = []
 
 		@with_session(session)
@@ -231,7 +231,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		Check that `insert(..., START)` works as expected
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 		result = []
 
 		@with_session(session)
@@ -261,7 +261,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		Check that `insert(..., END)` works as expected
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 		result = []
 
 		@with_session(session)
@@ -291,7 +291,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		Check that `insert(..., Before(...))` works as expected
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 		result = []
 
 		@with_session(session)
@@ -324,7 +324,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		Check that `insert(..., After(...))` works as expected
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 		result = []
 
 		@with_session(session)
@@ -357,7 +357,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		Check that `insert(..., After(<last header>))` works as expected
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 		result = []
 
 		@with_session(session)
@@ -390,7 +390,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		Check that multiple edits in a filter work as expected
 		"""
 		sender = MockEditor()
-		session = Session(Connect("example.com", LOCALHOST, 1025), sender)
+		session = Session(sender)
 		result = []
 
 		@with_session(session)
@@ -430,7 +430,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		Check that the AsyncGenerator-required method `asend()` works
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 
 		@with_session(session)
 		async def test_filter() -> None:
@@ -449,7 +449,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		Check that the AsyncGenerator-required method `athrow()` works
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 
 		@with_session(session)
 		async def test_filter() -> None:
@@ -471,7 +471,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		Check that the AsyncGenerator-required method `athrow()` works
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 
 		@with_session(session)
 		async def test_filter() -> None:
@@ -494,7 +494,7 @@ class HeaderAccessorTests(AsyncTestCase):
 		"""
 		Check that the AsyncGenerator-required method `athrow()` works
 		"""
-		session = Session(Connect("example.com", LOCALHOST, 1025), MockEditor())
+		session = Session(MockEditor())
 
 		@with_session(session)
 		async def test_filter() -> None:
