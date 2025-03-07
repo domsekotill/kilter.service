@@ -47,7 +47,7 @@ myst_enable_extensions += [
 
 intersphinx_mapping = {
 	"python": ("https://docs.python.org/3", None),
-	"kilter.protocol": ("https://kilter.doc.kodo.org.uk/kilter.protocol", None),
+	"kilter.protocol": ("https://kilter.kodo.org.uk/kilter.protocol", None),
 	"anyio": ("https://anyio.readthedocs.io/en/stable", None),
 }
 
